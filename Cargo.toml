@@ -1,0 +1,8 @@
+[package]
+name = "rustracing_jaeger"
+version = "0.1.0"
+authors = ["Takeru Ohta <phjgt308@gmail.com>"]
+
+[dependencies]
+rustracing = { git = "https://github.com/sile/rustracing.git" }
+thrift_codec = "0.1"
