@@ -1,5 +1,11 @@
 //! https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
+use std::time::{SystemTime, UNIX_EPOCH};
+use byteorder::{ByteOrder, BigEndian};
+
+use rustracing;
 use thrift_codec::data::{Struct, Field, List};
+
+use span::FinishedSpan;
 
 /// `TagKind` denotes the kind of a `Tag`'s value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -53,6 +59,32 @@ impl From<Tag> for Struct {
         Struct::new(fields)
     }
 }
+impl<'a> From<&'a rustracing::tag::Tag> for Tag {
+    fn from(f: &'a rustracing::tag::Tag) -> Self {
+        use rustracing::tag::TagValue;
+        let key = f.key().to_owned();
+        match *f.value() {
+            TagValue::Boolean(value) => Tag::Bool { key, value },
+            TagValue::Float(value) => Tag::Double { key, value },
+            TagValue::Integer(value) => Tag::Double {
+                key,
+                value: value as f64,
+            },
+            TagValue::String(ref value) => Tag::String {
+                key,
+                value: value.as_ref().to_owned(),
+            },
+        }
+    }
+}
+impl<'a> From<&'a rustracing::log::LogField> for Tag {
+    fn from(f: &'a rustracing::log::LogField) -> Self {
+        Tag::String {
+            key: f.key().to_owned(),
+            value: f.value().to_owned(),
+        }
+    }
+}
 
 /// `Log` is a timed even with an arbitrary set of tags.
 #[derive(Debug, Clone)]
@@ -68,6 +100,14 @@ impl From<Log> for Struct {
                 f.fields.into_iter().map(Struct::from).collect::<Vec<_>>(),
             ),
         ))
+    }
+}
+impl<'a> From<&'a rustracing::log::Log> for Log {
+    fn from(f: &'a rustracing::log::Log) -> Self {
+        Log {
+            timestamp: elapsed(UNIX_EPOCH, f.time()),
+            fields: f.fields().iter().map(From::from).collect(),
+        }
     }
 }
 
@@ -88,6 +128,21 @@ pub struct SpanRef {
 impl From<SpanRef> for Struct {
     fn from(f: SpanRef) -> Self {
         Struct::from((f.kind as i32, f.trace_id_low, f.trace_id_high, f.span_id))
+    }
+}
+impl<'a> From<&'a rustracing::span::SpanReference<::span::SpanContext>> for SpanRef {
+    fn from(f: &'a rustracing::span::SpanReference<::span::SpanContext>) -> Self {
+        let kind = if f.is_child_of() {
+            SpanRefKind::ChildOf
+        } else {
+            SpanRefKind::FollowsFrom
+        };
+        SpanRef {
+            kind,
+            trace_id_low: BigEndian::read_i64(&f.trace_id()[..8]),
+            trace_id_high: BigEndian::read_i64(&f.trace_id()[8..]),
+            span_id: f.span_id() as i64,
+        }
     }
 }
 
@@ -160,6 +215,38 @@ impl From<Span> for Struct {
             ));
         }
         Struct::new(fields)
+    }
+}
+impl<'a> From<&'a FinishedSpan> for Span {
+    fn from(f: &'a FinishedSpan) -> Self {
+        let state = f.context().state();
+        let parent_span_id = f.references()
+            .iter()
+            .find(|r| r.is_child_of())
+            .map(|r| r.span_id() as i64)
+            .unwrap_or(0);
+        Span {
+            trace_id_low: BigEndian::read_i64(&state.trace_id()[..8]),
+            trace_id_high: BigEndian::read_i64(&state.trace_id()[8..]),
+            span_id: state.span_id() as i64,
+            parent_span_id,
+            operation_name: f.operation_name().to_owned(),
+            references: f.references().iter().map(From::from).collect(),
+            flags: state.flags() as i32,
+            start_time: elapsed(UNIX_EPOCH, f.start_time()),
+            duration: elapsed(f.start_time(), f.finish_time()),
+            tags: f.tags().iter().map(From::from).collect(),
+            logs: f.logs().iter().map(From::from).collect(),
+        }
+    }
+}
+
+fn elapsed(start: SystemTime, finish: SystemTime) -> i64 {
+    if let Ok(d) = finish.duration_since(start) {
+        (d.as_secs() * 1_000_000 + u64::from(d.subsec_nanos()) / 1000) as i64
+    } else {
+        let d = start.duration_since(finish).expect("Never fails");
+        -((d.as_secs() * 1_000_000 + u64::from(d.subsec_nanos()) / 1000) as i64)
     }
 }
 
