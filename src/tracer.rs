@@ -1,5 +1,6 @@
 use std::ops::{Deref, DerefMut};
-use rustracing::{self, Sampler};
+use rustracing;
+use rustracing::sampler::Sampler;
 
 use span::SpanContext;
 

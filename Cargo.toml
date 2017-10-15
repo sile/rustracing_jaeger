@@ -4,8 +4,8 @@ version = "0.1.0"
 authors = ["Takeru Ohta <phjgt308@gmail.com>"]
 
 [dependencies]
-rustracing = { git = "https://github.com/sile/rustracing.git" }
 byteorder = "1"
 rand = "0.3"
+rustracing = "0.1"
 trackable = "0.2"
 thrift_codec = "0.1"

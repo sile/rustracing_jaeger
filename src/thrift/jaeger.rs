@@ -62,7 +62,7 @@ impl From<Tag> for Struct {
 impl<'a> From<&'a rustracing::tag::Tag> for Tag {
     fn from(f: &'a rustracing::tag::Tag) -> Self {
         use rustracing::tag::TagValue;
-        let key = f.key().to_owned();
+        let key = f.name().to_owned();
         match *f.value() {
             TagValue::Boolean(value) => Tag::Bool { key, value },
             TagValue::Float(value) => Tag::Double { key, value },
@@ -80,7 +80,7 @@ impl<'a> From<&'a rustracing::tag::Tag> for Tag {
 impl<'a> From<&'a rustracing::log::LogField> for Tag {
     fn from(f: &'a rustracing::log::LogField) -> Self {
         Tag::String {
-            key: f.key().to_owned(),
+            key: f.name().to_owned(),
             value: f.value().to_owned(),
         }
     }
@@ -219,7 +219,7 @@ impl From<Span> for Struct {
 }
 impl<'a> From<&'a FinishedSpan> for Span {
     fn from(f: &'a FinishedSpan) -> Self {
-        let state = f.context().state();
+        let state = f.context();
         let parent_span_id = f.references()
             .iter()
             .find(|r| r.is_child_of())

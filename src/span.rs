@@ -1,8 +1,8 @@
 use rand;
 use rustracing;
-use rustracing::SpanOptions;
+use rustracing::span::CandidateSpan;
 
-pub type Span = rustracing::Span<SpanContext>;
+pub type Span = rustracing::span::Span<SpanContext>;
 pub type FinishedSpan = rustracing::span::FinishedSpan<SpanContext>;
 
 #[derive(Debug, Clone)]
@@ -32,8 +32,8 @@ impl SpanContext {
         self.flags
     }
 }
-impl<'a> From<SpanOptions<'a, SpanContext>> for SpanContext {
-    fn from(f: SpanOptions<'a, Self>) -> Self {
+impl<'a> From<CandidateSpan<'a, SpanContext>> for SpanContext {
+    fn from(f: CandidateSpan<'a, Self>) -> Self {
         if let Some(primary) = f.references().first() {
             Self::with_trace_id(primary.trace_id)
         } else {

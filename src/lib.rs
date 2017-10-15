@@ -15,17 +15,18 @@ pub mod thrift;
 
 #[cfg(test)]
 mod tests {
-    use rustracing::AlwaysSampler;
+    use rustracing::sampler::AllSampler;
 
     use tracer::Tracer;
 
     #[test]
     fn it_works() {
-        let (tracer, span_rx) = Tracer::new(AlwaysSampler);
+        let (tracer, span_rx) = Tracer::new(AllSampler);
         {
             let _span = tracer.span("it_works").start();
             // do something
         }
-        let _span = span_rx.try_recv().unwrap();
+        let span = span_rx.try_recv().unwrap();
+        assert_eq!(span.operation_name(), "it_works");
     }
 }

@@ -10,14 +10,14 @@ use rustracing_jaeger::tracer::Tracer;
 use rustracing_jaeger::reporter::JaegerCompactReporter;
 
 fn main() {
-    let (tracer, span_rx) = Tracer::new(rustracing::AlwaysSampler);
+    let (tracer, span_rx) = Tracer::new(rustracing::sampler::AllSampler);
     {
         let span0 = tracer.span("main").start();
         thread::sleep(Duration::from_millis(10));
         {
             let mut span1 = tracer
                 .span("sub")
-                .child_of(&span0)
+                .child_of(span0)
                 .tag(Tag::new("foo", "bar"))
                 .start();
             span1.log(|log| { log.error().message("something wrong"); });
