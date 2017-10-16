@@ -6,7 +6,7 @@ extern crate trackable;
 use std::time::Duration;
 use std::thread;
 use rustracing::tag::Tag;
-use rustracing_jaeger::tracer::Tracer;
+use rustracing_jaeger::Tracer;
 use rustracing_jaeger::reporter::JaegerCompactReporter;
 
 fn main() {

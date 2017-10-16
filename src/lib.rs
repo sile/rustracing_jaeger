@@ -7,17 +7,20 @@ extern crate trackable;
 
 // TODO
 pub use thrift_codec::{Result, Error, ErrorKind};
+pub use span::Span;
+pub use tracer::Tracer;
 
 pub mod reporter;
 pub mod span;
-pub mod tracer;
 pub mod thrift;
+
+mod tracer;
 
 #[cfg(test)]
 mod tests {
     use rustracing::sampler::AllSampler;
 
-    use tracer::Tracer;
+    use Tracer;
 
     #[test]
     fn it_works() {

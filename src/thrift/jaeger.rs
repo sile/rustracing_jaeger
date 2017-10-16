@@ -5,7 +5,7 @@ use byteorder::{ByteOrder, BigEndian};
 use rustracing;
 use thrift_codec::data::{Struct, Field, List};
 
-use span::FinishedSpan;
+use span::{FinishedSpan, SpanReference};
 
 /// `TagKind` denotes the kind of a `Tag`'s value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -130,8 +130,8 @@ impl From<SpanRef> for Struct {
         Struct::from((f.kind as i32, f.trace_id_low, f.trace_id_high, f.span_id))
     }
 }
-impl<'a> From<&'a rustracing::span::SpanReference<::span::SpanContext>> for SpanRef {
-    fn from(f: &'a rustracing::span::SpanReference<::span::SpanContext>) -> Self {
+impl<'a> From<&'a SpanReference> for SpanRef {
+    fn from(f: &'a SpanReference) -> Self {
         let kind = if f.is_child_of() {
             SpanRefKind::ChildOf
         } else {
