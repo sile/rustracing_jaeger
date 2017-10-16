@@ -9,6 +9,7 @@ pub use rustracing::{Result, Error, ErrorKind};
 pub use span::Span;
 pub use tracer::Tracer;
 
+pub mod constants;
 pub mod reporter;
 pub mod span;
 pub mod thrift;
