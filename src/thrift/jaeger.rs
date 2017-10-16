@@ -1,10 +1,9 @@
 //! https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
 use std::time::{SystemTime, UNIX_EPOCH};
-use byteorder::{ByteOrder, BigEndian};
-
 use rustracing;
 use thrift_codec::data::{Struct, Field, List};
 
+use constants;
 use span::{FinishedSpan, SpanReference};
 
 /// `TagKind` denotes the kind of a `Tag`'s value.
@@ -139,9 +138,9 @@ impl<'a> From<&'a SpanReference> for SpanRef {
         };
         SpanRef {
             kind,
-            trace_id_low: BigEndian::read_i64(&f.trace_id()[..8]),
-            trace_id_high: BigEndian::read_i64(&f.trace_id()[8..]),
-            span_id: f.span_id() as i64,
+            trace_id_low: f.span().trace_id().low as i64,
+            trace_id_high: f.span().trace_id().high as i64,
+            span_id: f.span().span_id() as i64,
         }
     }
 }
@@ -159,6 +158,8 @@ pub struct Span {
     pub span_id: i64,
 
     /// Since nearly all spans will have parents spans, `ChildOf` refs do not have to be explicit.
+    ///
+    /// Should be `0` if the current span is a root span.
     pub parent_span_id: i64,
 
     pub operation_name: String,
@@ -219,25 +220,36 @@ impl From<Span> for Struct {
 }
 impl<'a> From<&'a FinishedSpan> for Span {
     fn from(f: &'a FinishedSpan) -> Self {
-        let state = f.context();
+        let state = f.context().state();
         let parent_span_id = f.references()
             .iter()
             .find(|r| r.is_child_of())
-            .map(|r| r.span_id() as i64)
+            .map(|r| r.span().span_id() as i64)
             .unwrap_or(0);
-        Span {
-            trace_id_low: BigEndian::read_i64(&state.trace_id()[..8]),
-            trace_id_high: BigEndian::read_i64(&state.trace_id()[8..]),
+        let mut span = Span {
+            trace_id_low: state.trace_id().low as i64,
+            trace_id_high: state.trace_id().high as i64,
             span_id: state.span_id() as i64,
             parent_span_id,
             operation_name: f.operation_name().to_owned(),
-            references: f.references().iter().map(From::from).collect(),
+            references: f.references()
+                .iter()
+                .filter(|r| r.span().is_sampled())
+                .map(From::from)
+                .collect(),
             flags: state.flags() as i32,
             start_time: elapsed(UNIX_EPOCH, f.start_time()),
             duration: elapsed(f.start_time(), f.finish_time()),
             tags: f.tags().iter().map(From::from).collect(),
             logs: f.logs().iter().map(From::from).collect(),
+        };
+        if let Some(id) = state.debug_id() {
+            span.tags.push(Tag::from(&rustracing::tag::Tag::new(
+                constants::JAEGER_DEBUG_HEADER,
+                id.to_owned(),
+            )));
         }
+        span
     }
 }
 

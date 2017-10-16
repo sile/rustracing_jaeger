@@ -17,7 +17,7 @@ fn main() {
         {
             let mut span1 = tracer
                 .span("sub")
-                .child_of(span0)
+                .child_of(&span0)
                 .tag(Tag::new("foo", "bar"))
                 .start();
             span1.log(|log| { log.error().message("something wrong"); });

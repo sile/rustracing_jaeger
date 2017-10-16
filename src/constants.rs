@@ -1,4 +1,4 @@
-//! https://github.com/uber/jaeger-client-go/blob/v2.9.0/constants.go
+//! https://github.com/uber/jaeger-client-go/tree/v2.9.0/constants.go
 
 /// The version of the client library reported as Span tag.
 pub const JAEGER_CLIENT_VERSION: &str = concat!("rustracing_jaeger-", env!("CARGO_PKG_VERSION"));
@@ -28,7 +28,7 @@ pub const TRACER_IP_TAG_KEY: &str = "ip";
 /// The http header name used to propagate tracing context.
 ///
 /// This must be in lower-case to avoid mismatches when decoding incoming headers.
-pub const TRACER_STATE_HEADER_NAME: &str = "uber-trace-id";
+pub const TRACER_CONTEXT_HEADER_NAME: &str = "uber-trace-id";
 
 /// The prefix for http headers used to propagate baggage.
 ///
