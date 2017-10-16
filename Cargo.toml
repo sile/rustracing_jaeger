@@ -5,6 +5,7 @@ authors = ["Takeru Ohta <phjgt308@gmail.com>"]
 
 [dependencies]
 byteorder = "1"
+hostname = "0.1"
 rand = "0.3"
 rustracing = "0.1"
 trackable = "0.2"

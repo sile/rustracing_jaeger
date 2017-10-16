@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate hostname;
 extern crate rand;
 extern crate rustracing;
 extern crate thrift_codec;

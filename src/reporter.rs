@@ -1,11 +1,13 @@
 use std::net::{UdpSocket, SocketAddr};
+use hostname;
 use rustracing::tag::Tag;
-use span::FinishedSpan;
 use thrift_codec::CompactEncode;
 use thrift_codec::message::Message;
 
 use Result;
+use constants;
 use error;
+use span::FinishedSpan;
 use thrift::{agent, jaeger};
 
 #[derive(Debug)]
@@ -22,11 +24,15 @@ impl JaegerCompactReporter {
             tags: Vec::new(),
         };
         let agent = SocketAddr::from(([127, 0, 0, 1], 6831));
-        Ok(JaegerCompactReporter {
+        let mut this = JaegerCompactReporter {
             socket,
             agent,
             process,
-        })
+        };
+        if let Some(hostname) = hostname::get_hostname() {
+            this.set_service_tag(Tag::new(constants::TRACER_HOSTNAME_TAG_KEY, hostname));
+        }
+        Ok(this)
     }
     pub fn set_agent_addr(&mut self, addr: SocketAddr) {
         self.agent = addr;
