@@ -4,7 +4,8 @@ use span::FinishedSpan;
 use thrift_codec::CompactEncode;
 use thrift_codec::message::Message;
 
-use {Result, Error};
+use Result;
+use error;
 use thrift::{agent, jaeger};
 
 #[derive(Debug)]
@@ -15,7 +16,7 @@ pub struct JaegerCompactReporter {
 }
 impl JaegerCompactReporter {
     pub fn new(service_name: &str) -> Result<Self> {
-        let socket = track!(UdpSocket::bind("127.0.0.1:0").map_err(Error::from))?;
+        let socket = track!(UdpSocket::bind("127.0.0.1:0").map_err(error::from_io_error))?;
         let process = jaeger::Process {
             service_name: service_name.to_owned(),
             tags: Vec::new(),
@@ -41,8 +42,12 @@ impl JaegerCompactReporter {
         let message = Message::from(agent::EmitBatchNotification { batch });
 
         let mut bytes = Vec::new();
-        track!(message.compact_encode(&mut bytes))?;
-        track!(self.socket.send_to(&bytes, self.agent).map_err(Error::from))?;
+        track!(message.compact_encode(&mut bytes).map_err(
+            error::from_thrift_error,
+        ))?;
+        track!(self.socket.send_to(&bytes, self.agent).map_err(
+            error::from_io_error,
+        ))?;
         Ok(())
     }
 }
