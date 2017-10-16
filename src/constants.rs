@@ -4,7 +4,7 @@
 pub const JAEGER_CLIENT_VERSION: &str = concat!("rustracing_jaeger-", env!("CARGO_PKG_VERSION"));
 
 /// The name of the tag used to report client version.
-pub const JAEGER_CLIENT_VERSION_TAG_KEY: &str = "jaeger.versin";
+pub const JAEGER_CLIENT_VERSION_TAG_KEY: &str = "jaeger.version";
 
 /// The name of HTTP header or a TextMap carrier key which,
 /// if found in the carrier, forces the trace to be sampled as "debug" trace.
