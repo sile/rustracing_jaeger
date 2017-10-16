@@ -223,7 +223,7 @@ impl<'a> From<&'a FinishedSpan> for Span {
         let state = f.context().state();
         let parent_span_id = f.references()
             .iter()
-            .find(|r| r.is_child_of())
+            .find(|r| r.is_child_of() && r.is_sampled())
             .map(|r| r.span().span_id() as i64)
             .unwrap_or(0);
         let mut span = Span {
