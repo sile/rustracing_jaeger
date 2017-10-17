@@ -26,6 +26,6 @@ fn main() {
     }
 
     let mut reporter = track_try_unwrap!(JaegerCompactReporter::new("example"));
-    reporter.set_service_tag(Tag::new("hello", "world"));
+    reporter.add_service_tag(Tag::new("hello", "world"));
     track_try_unwrap!(reporter.report(&span_rx.try_iter().collect::<Vec<_>>()));
 }

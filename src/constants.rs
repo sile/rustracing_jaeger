@@ -1,4 +1,5 @@
 //! https://github.com/uber/jaeger-client-go/tree/v2.9.0/constants.go
+#![allow(dead_code)]
 
 /// The version of the client library reported as Span tag.
 pub const JAEGER_CLIENT_VERSION: &str = concat!("rustracing_jaeger-", env!("CARGO_PKG_VERSION"));

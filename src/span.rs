@@ -1,4 +1,10 @@
-// https://github.com/uber/jaeger-client-go/tree/v2.9.0/propagation.go
+//! Span.
+//!
+//! # References
+//!
+//! - [constants.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/constants.go)
+//! - [context.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/context.go)
+//! - [propagation.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/propagation.go)
 use std::fmt;
 use std::str::{self, FromStr};
 use rand;
@@ -11,27 +17,61 @@ use {Result, Error, ErrorKind};
 use constants;
 use error;
 
+/// Span.
 pub type Span = rustracing::span::Span<SpanContextState>;
+
+/// Finished span.
 pub type FinishedSpan = rustracing::span::FinishedSpan<SpanContextState>;
+
+/// Span receiver.
 pub type SpanReceiver = rustracing::span::SpanReceiver<SpanContextState>;
+
+/// Options for starting a span.
 pub type StartSpanOptions<'a> = rustracing::span::StartSpanOptions<
     'a,
     BoxSampler<SpanContextState>,
     SpanContextState,
 >;
+
+/// Candidate span for tracing.
 pub type CandidateSpan<'a> = rustracing::span::CandidateSpan<'a, SpanContextState>;
+
+/// Span context.
 pub type SpanContext = rustracing::span::SpanContext<SpanContextState>;
+
+/// Span reference.
 pub type SpanReference = rustracing::span::SpanReference<SpanContextState>;
 
 const FLAG_SAMPLED: u32 = 0b01;
 const FLAG_DEBUG: u32 = 0b10;
 
+/// Unique 128bit identifier of a trace.
+///
+/// ```
+/// use rustracing_jaeger::span::TraceId;
+///
+/// let id = TraceId{ high: 0, low: 10 };
+/// assert_eq!(id.to_string(), "a");
+/// assert_eq!("a".parse::<TraceId>().unwrap(), id);
+///
+/// let id = TraceId{ high: 1, low: 2 };
+/// assert_eq!(id.to_string(), "10000000000000002");
+/// assert_eq!("10000000000000002".parse::<TraceId>().unwrap(), id);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[allow(missing_docs)]
 pub struct TraceId {
     pub high: u64,
     pub low: u64,
 }
+impl TraceId {
+    /// Makes a randomly generated `TraceId`.
+    pub fn new() -> Self {
+        TraceId::default()
+    }
+}
 impl Default for TraceId {
+    /// Makes a randomly generated `TraceId`.
     fn default() -> Self {
         TraceId {
             high: rand::random(),
@@ -74,7 +114,7 @@ impl FromStr for TraceId {
     }
 }
 
-/// https://github.com/uber/jaeger-client-go/tree/v2.9.0/context.go
+/// Jager specific span context state.
 #[derive(Debug, Clone)]
 pub struct SpanContextState {
     trace_id: TraceId,
@@ -83,40 +123,51 @@ pub struct SpanContextState {
     debug_id: String,
 }
 impl SpanContextState {
+    /// Returns the trace identifier of this span.
+    pub fn trace_id(&self) -> TraceId {
+        self.trace_id
+    }
+
+    /// Returns the identifier of this span.
+    pub fn span_id(&self) -> u64 {
+        self.span_id
+    }
+
+    /// Returns `true` if this span has been sampled (i.e., being traced).
+    pub fn is_sampled(&self) -> bool {
+        (self.flags & FLAG_SAMPLED) != 0
+    }
+
+    /// Returns the debug identifier of this span if exists.
+    pub fn debug_id(&self) -> Option<&str> {
+        if self.debug_id.is_empty() {
+            None
+        } else {
+            Some(&self.debug_id)
+        }
+    }
+
+    fn set_debug_id(&mut self, debug_id: String) {
+        if !debug_id.is_empty() {
+            self.flags |= FLAG_DEBUG;
+            self.debug_id = debug_id;
+        }
+    }
+
+    pub(crate) fn flags(&self) -> u32 {
+        self.flags
+    }
+
     fn root() -> Self {
         Self::with_trace_id(TraceId::default())
     }
+
     fn with_trace_id(trace_id: TraceId) -> Self {
         SpanContextState {
             trace_id,
             span_id: rand::random(),
             flags: FLAG_SAMPLED,
             debug_id: String::new(),
-        }
-    }
-    pub fn trace_id(&self) -> TraceId {
-        self.trace_id
-    }
-    pub fn span_id(&self) -> u64 {
-        self.span_id
-    }
-    pub fn flags(&self) -> u32 {
-        self.flags
-    }
-    pub fn is_sampled(&self) -> bool {
-        (self.flags & FLAG_SAMPLED) != 0
-    }
-    pub fn set_debug_id(&mut self, debug_id: String) {
-        if !debug_id.is_empty() {
-            self.flags |= FLAG_DEBUG;
-            self.debug_id = debug_id;
-        }
-    }
-    pub fn debug_id(&self) -> Option<&str> {
-        if self.debug_id.is_empty() {
-            None
-        } else {
-            Some(&self.debug_id)
         }
     }
 }
@@ -218,5 +269,21 @@ where
         } else {
             Ok(None)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn trace_id_conversion_works() {
+        let id = TraceId { high: 0, low: 10 };
+        assert_eq!(id.to_string(), "a");
+        assert_eq!("a".parse::<TraceId>().unwrap(), id);
+
+        let id = TraceId { high: 1, low: 2 };
+        assert_eq!(id.to_string(), "10000000000000002");
+        assert_eq!("10000000000000002".parse::<TraceId>().unwrap(), id);
     }
 }
