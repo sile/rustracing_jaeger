@@ -1,15 +1,53 @@
 rustracing_jaeger
 =================
 
-- https://github.com/uber/jaeger-idl/blob/master/thrift/agent.thrift
-- https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
+[![Crates.io: rustracing_jaeger](http://meritbadge.herokuapp.com/rustracing_jaeger)](https://crates.io/crates/rustracing_jaeger)
+[![Documentation](https://docs.rs/rustracing_jaeger/badge.svg)](https://docs.rs/rustracing_jaeger)
+[![Build Status](https://travis-ci.org/sile/rustracing_jaeger.svg?branch=master)](https://travis-ci.org/sile/rustracing_jaeger)
+[![Code Coverage](https://codecov.io/gh/sile/rustracing_jaeger/branch/master/graph/badge.svg)](https://codecov.io/gh/sile/rustracing_jaeger/branch/master)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[Jaeger][jaeger] client library created on top of [rustracing].
+
+[jaeger]: https://github.com/jaegertracing/jaeger
+[rustracing]: https://crates.io/crates/rustracing
+
+[Documentation](https://docs.rs/rustracing_jaeger)
 
 Examples
 --------
 
+### Basic Usage
+
+```rust
+use rustracing::sampler::AllSampler;
+use rustracing_jaeger::Tracer;
+use rustracing_jaeger::reporter::JaegerCompactReporter;
+
+let (tracer, span_rx) = Tracer::new(AllSampler);
+{
+    let span = tracer.span("sample_op").start();
+    // Do something
+
+} // The dropped span will be sent to `span_rx`
+
+let span = span_rx.try_recv().unwrap();
+assert_eq!(span.operation_name(), "sample_op");
+
+// Reports this span to the local jaeger agent
+let reporter = JaegerCompactReporter::new("sample_service").unwrap();
+reporter.report(&[span]).unwrap();
+```
+
+### Executes `report.rs` example
+
 ```console
+# Run jaeger in background
 $ docker run -d -p6831:6831/udp -p6832:6832/udp -p16686:16686 jaegertracing/all-in-one:latest
 
+# Report example spans
 $ cargo run --example report
+
+# View spans
 $ firefox http://localhost:16686/
 ```
