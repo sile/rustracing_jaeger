@@ -28,10 +28,10 @@ pub enum Tag {
 impl Tag {
     pub fn key(&self) -> &str {
         match *self {
-            Tag::String { ref key, .. } => key,
-            Tag::Double { ref key, .. } => key,
-            Tag::Bool { ref key, .. } => key,
-            Tag::Long { ref key, .. } => key,
+            Tag::String { ref key, .. } |
+            Tag::Double { ref key, .. } |
+            Tag::Bool { ref key, .. } |
+            Tag::Long { ref key, .. } |
             Tag::Binary { ref key, .. } => key,
         }
     }
@@ -223,7 +223,7 @@ impl<'a> From<&'a FinishedSpan> for Span {
         let state = f.context().state();
         let parent_span_id = f.references()
             .iter()
-            .find(|r| r.is_child_of() && r.is_sampled())
+            .find(|r| r.is_child_of() && r.span().is_sampled())
             .map(|r| r.span().span_id() as i64)
             .unwrap_or(0);
         let mut span = Span {
