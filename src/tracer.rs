@@ -14,7 +14,7 @@ impl Tracer {
     /// Makes a new `Tracer` instance.
     pub fn new<S>(sampler: S) -> (Self, SpanReceiver)
     where
-        S: Sampler<SpanContextState> + Send + 'static,
+        S: Sampler<SpanContextState> + Send + Sync + 'static,
     {
         let (inner, rx) = InnerTracer::new(sampler.boxed());
         (Tracer { inner }, rx)
@@ -23,7 +23,7 @@ impl Tracer {
     /// Clone with the given `sampler`.
     pub fn clone_with_sampler<T>(&self, sampler: T) -> Self
     where
-        T: Sampler<SpanContextState> + Send + 'static,
+        T: Sampler<SpanContextState> + Send + Sync + 'static,
     {
         let inner = self.inner.clone_with_sampler(sampler.boxed());
         Tracer { inner }
@@ -40,5 +40,20 @@ impl Tracer {
 impl fmt::Debug for Tracer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Tracer {{ .. }}")
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use rustracing::sampler::NoopSampler;
+
+    use super::*;
+
+    #[test]
+    fn is_tracer_sendable() {
+        fn is_send<T: Send>(_: T) {}
+
+        let (tracer, _) = Tracer::new(NoopSampler);
+        is_send(tracer);
     }
 }
