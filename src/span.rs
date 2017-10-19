@@ -20,6 +20,9 @@ use error;
 /// Span.
 pub type Span = rustracing::span::Span<SpanContextState>;
 
+/// Span handle.
+pub type SpanHandle = rustracing::span::SpanHandle<SpanContextState>;
+
 /// Finished span.
 pub type FinishedSpan = rustracing::span::FinishedSpan<SpanContextState>;
 
