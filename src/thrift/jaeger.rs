@@ -65,10 +65,7 @@ impl<'a> From<&'a rustracing::tag::Tag> for Tag {
         match *f.value() {
             TagValue::Boolean(value) => Tag::Bool { key, value },
             TagValue::Float(value) => Tag::Double { key, value },
-            TagValue::Integer(value) => Tag::Double {
-                key,
-                value: value as f64,
-            },
+            TagValue::Integer(value) => Tag::Long { key, value },
             TagValue::String(ref value) => Tag::String {
                 key,
                 value: value.as_ref().to_owned(),
