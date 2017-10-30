@@ -51,3 +51,8 @@ $ cargo run --example report
 # View spans
 $ firefox http://localhost:16686/
 ```
+
+References
+----------
+
+- [Jaeger Client Library](https://github.com/jaegertracing/jaeger/blob/master/docs/client_libraries.md)
