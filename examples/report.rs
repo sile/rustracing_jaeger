@@ -20,7 +20,9 @@ fn main() {
                 .child_of(&span0)
                 .tag(Tag::new("foo", "bar"))
                 .start();
-            span1.log(|log| { log.error().message("something wrong"); });
+            span1.log(|log| {
+                log.error().message("something wrong");
+            });
             thread::sleep(Duration::from_millis(10));
         }
     }

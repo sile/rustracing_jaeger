@@ -1,7 +1,7 @@
 //! https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
 use std::time::{SystemTime, UNIX_EPOCH};
 use rustracing;
-use thrift_codec::data::{Struct, Field, List};
+use thrift_codec::data::{Field, List, Struct};
 
 use constants;
 use span::{FinishedSpan, SpanReference};
@@ -28,11 +28,11 @@ pub enum Tag {
 impl Tag {
     pub fn key(&self) -> &str {
         match *self {
-            Tag::String { ref key, .. } |
-            Tag::Double { ref key, .. } |
-            Tag::Bool { ref key, .. } |
-            Tag::Long { ref key, .. } |
-            Tag::Binary { ref key, .. } => key,
+            Tag::String { ref key, .. }
+            | Tag::Double { ref key, .. }
+            | Tag::Bool { ref key, .. }
+            | Tag::Long { ref key, .. }
+            | Tag::Binary { ref key, .. } => key,
         }
     }
     pub fn kind(&self) -> TagKind {
@@ -92,9 +92,7 @@ impl From<Log> for Struct {
     fn from(f: Log) -> Self {
         Struct::from((
             f.timestamp,
-            List::from(
-                f.fields.into_iter().map(Struct::from).collect::<Vec<_>>(),
-            ),
+            List::from(f.fields.into_iter().map(Struct::from).collect::<Vec<_>>()),
         ))
     }
 }
@@ -199,17 +197,13 @@ impl From<Span> for Struct {
         if !f.tags.is_empty() {
             fields.push(Field::new(
                 10,
-                List::from(
-                    f.tags.into_iter().map(Struct::from).collect::<Vec<_>>(),
-                ),
+                List::from(f.tags.into_iter().map(Struct::from).collect::<Vec<_>>()),
             ));
         }
         if !f.logs.is_empty() {
             fields.push(Field::new(
                 11,
-                List::from(
-                    f.logs.into_iter().map(Struct::from).collect::<Vec<_>>(),
-                ),
+                List::from(f.logs.into_iter().map(Struct::from).collect::<Vec<_>>()),
             ));
         }
         Struct::new(fields)
@@ -286,9 +280,7 @@ impl From<Batch> for Struct {
     fn from(f: Batch) -> Self {
         Struct::from((
             Struct::from(f.process),
-            List::from(
-                f.spans.into_iter().map(Struct::from).collect::<Vec<_>>(),
-            ),
+            List::from(f.spans.into_iter().map(Struct::from).collect::<Vec<_>>()),
         ))
     }
 }

@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 use std::fmt;
 use rustracing::Tracer as InnerTracer;
-use rustracing::sampler::{Sampler, BoxSampler};
+use rustracing::sampler::{BoxSampler, Sampler};
 
 use span::{SpanContextState, SpanReceiver, StartSpanOptions};
 

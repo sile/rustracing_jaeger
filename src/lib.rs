@@ -36,7 +36,7 @@ extern crate thrift_codec;
 #[macro_use]
 extern crate trackable;
 
-pub use rustracing::{Result, Error, ErrorKind};
+pub use rustracing::{Error, ErrorKind, Result};
 pub use span::Span;
 pub use tracer::Tracer;
 

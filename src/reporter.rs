@@ -1,7 +1,7 @@
 //! Reporter to the [jaeger agent]
 //!
 //! [jaeger agent]: http://jaeger.readthedocs.io/en/latest/deployment/#agent
-use std::net::{UdpSocket, SocketAddr};
+use std::net::{SocketAddr, UdpSocket};
 use hostname;
 use rustracing::tag::Tag;
 use thrift_codec::{BinaryEncode, CompactEncode};
@@ -52,9 +52,11 @@ impl JaegerCompactReporter {
     pub fn report(&self, spans: &[FinishedSpan]) -> Result<()> {
         track!(self.0.report(spans, |message| {
             let mut bytes = Vec::new();
-            track!(message.compact_encode(&mut bytes).map_err(
-                error::from_thrift_error,
-            ))?;
+            track!(
+                message
+                    .compact_encode(&mut bytes,)
+                    .map_err(error::from_thrift_error,)
+            )?;
             Ok(bytes)
         }))
     }
@@ -99,9 +101,11 @@ impl JaegerBinaryReporter {
     pub fn report(&self, spans: &[FinishedSpan]) -> Result<()> {
         track!(self.0.report(spans, |message| {
             let mut bytes = Vec::new();
-            track!(message.binary_encode(&mut bytes).map_err(
-                error::from_thrift_error,
-            ))?;
+            track!(
+                message
+                    .binary_encode(&mut bytes,)
+                    .map_err(error::from_thrift_error,)
+            )?;
             Ok(bytes)
         }))
     }
@@ -152,9 +156,11 @@ impl JaegerReporter {
         };
         let message = Message::from(agent::EmitBatchNotification { batch });
         let bytes = track!(encode(message))?;
-        track!(self.socket.send_to(&bytes, self.agent).map_err(
-            error::from_io_error,
-        ))?;
+        track!(
+            self.socket
+                .send_to(&bytes, self.agent,)
+                .map_err(error::from_io_error,)
+        )?;
         Ok(())
     }
 }

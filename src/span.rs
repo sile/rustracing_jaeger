@@ -9,11 +9,11 @@ use std::fmt;
 use std::str::{self, FromStr};
 use rand;
 use rustracing;
-use rustracing::carrier::{InjectToHttpHeader, SetHttpHeaderField, ExtractFromHttpHeader,
-                          IterHttpHeaderFields};
+use rustracing::carrier::{ExtractFromHttpHeader, InjectToHttpHeader, IterHttpHeaderFields,
+                          SetHttpHeaderField};
 use rustracing::sampler::BoxSampler;
 
-use {Result, Error, ErrorKind};
+use {Error, ErrorKind, Result};
 use constants;
 use error;
 
@@ -30,11 +30,8 @@ pub type FinishedSpan = rustracing::span::FinishedSpan<SpanContextState>;
 pub type SpanReceiver = rustracing::span::SpanReceiver<SpanContextState>;
 
 /// Options for starting a span.
-pub type StartSpanOptions<'a> = rustracing::span::StartSpanOptions<
-    'a,
-    BoxSampler<SpanContextState>,
-    SpanContextState,
->;
+pub type StartSpanOptions<'a> =
+    rustracing::span::StartSpanOptions<'a, BoxSampler<SpanContextState>, SpanContextState>;
 
 /// Candidate span for tracing.
 pub type CandidateSpan<'a> = rustracing::span::CandidateSpan<'a, SpanContextState>;
@@ -95,21 +92,15 @@ impl FromStr for TraceId {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self> {
         if s.len() <= 16 {
-            let low = track!(u64::from_str_radix(s, 16).map_err(
-                error::from_parse_int_error,
-            ))?;
+            let low = track!(u64::from_str_radix(s, 16).map_err(error::from_parse_int_error,))?;
             Ok(TraceId { high: 0, low })
         } else if s.len() <= 32 {
             let (high, low) = s.as_bytes().split_at(s.len() - 16);
             let high = track!(str::from_utf8(high).map_err(error::from_utf8_error))?;
-            let high = track!(u64::from_str_radix(high, 16).map_err(
-                error::from_parse_int_error,
-            ))?;
+            let high = track!(u64::from_str_radix(high, 16).map_err(error::from_parse_int_error,))?;
 
             let low = track!(str::from_utf8(low).map_err(error::from_utf8_error))?;
-            let low = track!(u64::from_str_radix(low, 16).map_err(
-                error::from_parse_int_error,
-            ))?;
+            let low = track!(u64::from_str_radix(low, 16).map_err(error::from_parse_int_error,))?;
             Ok(TraceId { high, low })
         } else {
             track_panic!(ErrorKind::InvalidInput, "s={:?}", s)
@@ -180,10 +171,7 @@ impl fmt::Display for SpanContextState {
         write!(
             f,
             "{}:{:x}:{:x}:{:x}",
-            self.trace_id,
-            self.span_id,
-            dummy_parent_id,
-            self.flags
+            self.trace_id, self.span_id, dummy_parent_id, self.flags
         )
     }
 }
@@ -194,15 +182,12 @@ impl FromStr for SpanContextState {
 
         macro_rules! token { () => { track_assert_some!(tokens.next(), ErrorKind::InvalidInput) } }
         let trace_id = track!(token!().parse())?;
-        let span_id = track!(u64::from_str_radix(token!(), 16).map_err(
-            error::from_parse_int_error,
-        ))?;
-        let _parent_span_id = track!(u64::from_str_radix(token!(), 16).map_err(
-            error::from_parse_int_error,
-        ))?;
-        let flags = track!(u32::from_str_radix(token!(), 16).map_err(
-            error::from_parse_int_error,
-        ))?;
+        let span_id =
+            track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error,))?;
+        let _parent_span_id =
+            track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error,))?;
+        let flags =
+            track!(u32::from_str_radix(token!(), 16).map_err(error::from_parse_int_error,))?;
 
         Ok(SpanContextState {
             trace_id,
