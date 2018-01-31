@@ -73,7 +73,7 @@ impl JaegerBinaryReporter {
     /// If the UDP socket used to report spans can not be bound to `127.0.0.1:0`,
     /// it will return an error which has the kind `ErrorKind::Other`.
     pub fn new(service_name: &str) -> Result<Self> {
-        let inner = track!(JaegerReporter::new(service_name, 6831))?;
+        let inner = track!(JaegerReporter::new(service_name, 6832))?;
         Ok(JaegerBinaryReporter(inner))
     }
 
