@@ -45,7 +45,7 @@ impl fmt::Debug for Tracer {
 
 #[cfg(test)]
 mod test {
-    use rustracing::sampler::NoopSampler;
+    use rustracing::sampler::NullSampler;
 
     use super::*;
 
@@ -53,7 +53,7 @@ mod test {
     fn is_tracer_sendable() {
         fn is_send<T: Send>(_: T) {}
 
-        let (tracer, _) = Tracer::new(NoopSampler);
+        let (tracer, _) = Tracer::new(NullSampler);
         is_send(tracer);
     }
 }
