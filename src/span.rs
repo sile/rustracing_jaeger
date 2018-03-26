@@ -117,6 +117,16 @@ pub struct SpanContextState {
     debug_id: String,
 }
 impl SpanContextState {
+    /// Generate a new SpanContextState with a given TraceId
+    pub fn with_trace_id(trace_id: TraceId) -> Self {
+        SpanContextState {
+            trace_id,
+            span_id: rand::random(),
+            flags: FLAG_SAMPLED,
+            debug_id: String::new(),
+        }
+    }
+
     /// Returns the trace identifier of this span.
     pub fn trace_id(&self) -> TraceId {
         self.trace_id
@@ -154,15 +164,6 @@ impl SpanContextState {
 
     fn root() -> Self {
         Self::with_trace_id(TraceId::default())
-    }
-
-    fn with_trace_id(trace_id: TraceId) -> Self {
-        SpanContextState {
-            trace_id,
-            span_id: rand::random(),
-            flags: FLAG_SAMPLED,
-            debug_id: String::new(),
-        }
     }
 }
 impl fmt::Display for SpanContextState {
