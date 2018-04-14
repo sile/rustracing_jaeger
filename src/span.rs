@@ -108,6 +108,76 @@ impl FromStr for TraceId {
     }
 }
 
+/// `SpanContextState` builder.
+///
+/// Normally it is recommended to build `SpanContextState` using APIs provided by `Tracer` or `SpanContext`
+/// rather than via this.
+///
+/// But it may be useful, for example,
+/// if you want to handle custom carrier formats that are not defined in the OpenTracing [specification].
+///
+/// [specification]: https://github.com/opentracing/specification/blob/master/specification.md
+#[derive(Debug, Clone)]
+pub struct SpanContextStateBuilder {
+    trace_id: Option<TraceId>,
+    span_id: Option<u64>,
+    flags: u32,
+    debug_id: String,
+}
+impl SpanContextStateBuilder {
+    /// Makes a new `SpanContextStateBuilder` instance.
+    pub fn new() -> Self {
+        SpanContextStateBuilder {
+            trace_id: None,
+            span_id: None,
+            flags: FLAG_SAMPLED,
+            debug_id: String::new(),
+        }
+    }
+
+    /// Sets the trace identifier.
+    ///
+    /// The default value is `TraceId::new()`.
+    pub fn trace_id(mut self, trace_id: TraceId) -> Self {
+        self.trace_id = Some(trace_id);
+        self
+    }
+
+    /// Sets the span identifier.
+    ///
+    /// The default value is `rand::random()`.
+    pub fn span_id(mut self, span_id: u64) -> Self {
+        self.span_id = Some(span_id);
+        self
+    }
+
+    /// Sets the debug identifier.
+    ///
+    /// It is not set by default.
+    pub fn debug_id(mut self, debug_id: String) -> Self {
+        if !debug_id.is_empty() {
+            self.flags |= FLAG_DEBUG;
+            self.debug_id = debug_id;
+        }
+        self
+    }
+
+    /// Builds a `SpanContextState` instance with the specified parameters.
+    pub fn finish(self) -> SpanContextState {
+        SpanContextState {
+            trace_id: self.trace_id.unwrap_or_default(),
+            span_id: self.span_id.unwrap_or_else(rand::random),
+            flags: self.flags,
+            debug_id: self.debug_id,
+        }
+    }
+}
+impl Default for SpanContextStateBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Jager specific span context state.
 #[derive(Debug, Clone)]
 pub struct SpanContextState {
