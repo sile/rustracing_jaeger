@@ -5,17 +5,17 @@
 //! - [constants.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/constants.go)
 //! - [context.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/context.go)
 //! - [propagation.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/propagation.go)
-use std::fmt;
-use std::str::{self, FromStr};
 use rand;
 use rustracing;
 use rustracing::carrier::{ExtractFromHttpHeader, InjectToHttpHeader, IterHttpHeaderFields,
                           SetHttpHeaderField};
 use rustracing::sampler::BoxSampler;
+use std::fmt;
+use std::str::{self, FromStr};
 
-use {Error, ErrorKind, Result};
 use constants;
 use error;
+use {Error, ErrorKind, Result};
 
 /// Span.
 pub type Span = rustracing::span::Span<SpanContextState>;
@@ -250,14 +250,17 @@ impl FromStr for SpanContextState {
     fn from_str(s: &str) -> Result<Self> {
         let mut tokens = s.splitn(4, ':');
 
-        macro_rules! token { () => { track_assert_some!(tokens.next(), ErrorKind::InvalidInput) } }
+        macro_rules! token {
+            () => {
+                track_assert_some!(tokens.next(), ErrorKind::InvalidInput)
+            };
+        }
         let trace_id = track!(token!().parse())?;
         let span_id =
-            track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error,))?;
+            track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
         let _parent_span_id =
-            track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error,))?;
-        let flags =
-            track!(u32::from_str_radix(token!(), 16).map_err(error::from_parse_int_error,))?;
+            track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
+        let flags = track!(u32::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
 
         Ok(SpanContextState {
             trace_id,

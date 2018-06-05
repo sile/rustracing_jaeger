@@ -1,6 +1,6 @@
 //! https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
-use std::time::{SystemTime, UNIX_EPOCH};
 use rustracing;
+use std::time::{SystemTime, UNIX_EPOCH};
 use thrift_codec::data::{Field, List, Struct};
 
 use constants;

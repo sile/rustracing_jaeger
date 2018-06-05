@@ -53,8 +53,8 @@ mod tests {
     use rustracing::sampler::AllSampler;
     use rustracing::tag::Tag;
 
-    use Tracer;
     use reporter::JaegerCompactReporter;
+    use Tracer;
 
     #[test]
     fn it_works() {

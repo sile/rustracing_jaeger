@@ -1,17 +1,17 @@
 //! Reporter to the [jaeger agent]
 //!
 //! [jaeger agent]: http://jaeger.readthedocs.io/en/latest/deployment/#agent
-use std::net::{SocketAddr, UdpSocket};
 use hostname;
 use rustracing::tag::Tag;
-use thrift_codec::{BinaryEncode, CompactEncode};
+use std::net::{SocketAddr, UdpSocket};
 use thrift_codec::message::Message;
+use thrift_codec::{BinaryEncode, CompactEncode};
 
-use Result;
 use constants;
 use error;
 use span::FinishedSpan;
 use thrift::{agent, jaeger};
+use Result;
 
 /// Reporter for the agent which accepts jaeger.thrift over compact thrift protocol.
 #[derive(Debug)]

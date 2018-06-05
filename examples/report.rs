@@ -3,11 +3,11 @@ extern crate rustracing_jaeger;
 #[macro_use]
 extern crate trackable;
 
-use std::time::Duration;
-use std::thread;
 use rustracing::tag::Tag;
-use rustracing_jaeger::Tracer;
 use rustracing_jaeger::reporter::JaegerCompactReporter;
+use rustracing_jaeger::Tracer;
+use std::thread;
+use std::time::Duration;
 
 fn main() {
     let (tracer, span_rx) = Tracer::new(rustracing::sampler::AllSampler);
