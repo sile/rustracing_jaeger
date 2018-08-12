@@ -212,7 +212,8 @@ impl From<Span> for Struct {
 impl<'a> From<&'a FinishedSpan> for Span {
     fn from(f: &'a FinishedSpan) -> Self {
         let state = f.context().state();
-        let parent_span_id = f.references()
+        let parent_span_id = f
+            .references()
             .iter()
             .find(|r| r.span().is_sampled())
             .map(|r| r.span().span_id() as i64)
@@ -223,7 +224,8 @@ impl<'a> From<&'a FinishedSpan> for Span {
             span_id: state.span_id() as i64,
             parent_span_id,
             operation_name: f.operation_name().to_owned(),
-            references: f.references()
+            references: f
+                .references()
                 .iter()
                 .filter(|r| r.span().is_sampled())
                 .map(From::from)

@@ -7,8 +7,9 @@
 //! - [propagation.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/propagation.go)
 use rand;
 use rustracing;
-use rustracing::carrier::{ExtractFromHttpHeader, InjectToHttpHeader, IterHttpHeaderFields,
-                          SetHttpHeaderField};
+use rustracing::carrier::{
+    ExtractFromHttpHeader, InjectToHttpHeader, IterHttpHeaderFields, SetHttpHeaderField,
+};
 use rustracing::sampler::BoxSampler;
 use std::fmt;
 use std::str::{self, FromStr};
