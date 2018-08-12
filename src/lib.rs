@@ -12,6 +12,8 @@
 //! use rustracing_jaeger::Tracer;
 //! use rustracing_jaeger::reporter::JaegerCompactReporter;
 //! # fn main() {
+//!
+//! // Creates a tracer
 //! let (tracer, span_rx) = Tracer::new(AllSampler);
 //! {
 //!     let span = tracer.span("sample_op").start();

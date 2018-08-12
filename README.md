@@ -24,6 +24,7 @@ use rustracing::sampler::AllSampler;
 use rustracing_jaeger::Tracer;
 use rustracing_jaeger::reporter::JaegerCompactReporter;
 
+// Creates a tracer
 let (tracer, span_rx) = Tracer::new(AllSampler);
 {
     let span = tracer.span("sample_op").start();
@@ -48,9 +49,11 @@ $ docker run -d -p6831:6831/udp -p6832:6832/udp -p16686:16686 jaegertracing/all-
 # Report example spans
 $ cargo run --example report
 
-# View spans
+# View spans (see the image below)
 $ firefox http://localhost:16686/
 ```
+
+![Jaeger UI](trace.png)
 
 References
 ----------
