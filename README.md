@@ -1,7 +1,7 @@
 rustracing_jaeger
 =================
 
-[![Crates.io: rustracing_jaeger](http://meritbadge.herokuapp.com/rustracing_jaeger)](https://crates.io/crates/rustracing_jaeger)
+[![Crates.io: rustracing_jaeger](https://img.shields.io/crates/v/rustracing_jaeger.svg)](https://crates.io/crates/rustracing_jaeger)
 [![Documentation](https://docs.rs/rustracing_jaeger/badge.svg)](https://docs.rs/rustracing_jaeger)
 [![Build Status](https://travis-ci.org/sile/rustracing_jaeger.svg?branch=master)](https://travis-ci.org/sile/rustracing_jaeger)
 [![Code Coverage](https://codecov.io/gh/sile/rustracing_jaeger/branch/master/graph/badge.svg)](https://codecov.io/gh/sile/rustracing_jaeger/branch/master)
