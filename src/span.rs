@@ -1,5 +1,36 @@
 //! Span.
 //!
+//! # How to inject/extract a span
+//!
+//! You can inject/extract the context of a span by using `SpanContext::inject_to_xxx` and
+//! `SpanContext::extract_from_xxx` methods respectively.
+//!
+//! The simplest way is to use `HashMap` as the carrier as follows:
+//!
+//! ```
+//! # extern crate rustracing_jaeger;
+//! use std::collections::HashMap;
+//! use rustracing_jaeger::span::SpanContext;
+//!
+//! # fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! // Extraction
+//! let mut carrier = HashMap::new();
+//! carrier.insert(
+//!     "uber-trace-id".to_string(),
+//!     "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:1".to_string(),
+//! );
+//! let context = SpanContext::extract_from_text_map(&carrier)?.unwrap();
+//! let trace_id = context.state().trace_id();
+//! assert_eq!(trace_id.to_string(), "6309ab92c95468edea0dc1a9772ae2dc");
+//!
+//! // Injection
+//! let mut injected_carrier = HashMap::new();
+//! context.inject_to_text_map(&mut injected_carrier)?;
+//! assert_eq!(injected_carrier, carrier);
+//! # Ok(())
+//! # }
+//! ```
+//!
 //! # References
 //!
 //! - [constants.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/constants.go)
@@ -8,7 +39,8 @@
 use rand;
 use rustracing;
 use rustracing::carrier::{
-    ExtractFromHttpHeader, InjectToHttpHeader, IterHttpHeaderFields, SetHttpHeaderField,
+    ExtractFromHttpHeader, ExtractFromTextMap, InjectToHttpHeader, InjectToTextMap,
+    IterHttpHeaderFields, SetHttpHeaderField, TextMap,
 };
 use rustracing::sampler::BoxSampler;
 use std::fmt;
@@ -280,6 +312,31 @@ impl<'a> From<CandidateSpan<'a>> for SpanContextState {
         }
     }
 }
+impl<T: TextMap> InjectToTextMap<T> for SpanContextState {
+    fn inject_to_text_map(context: &SpanContext, carrier: &mut T) -> Result<()> {
+        // TODO: Support baggage items
+        carrier.set(
+            constants::TRACER_CONTEXT_HEADER_NAME,
+            &context.state().to_string(),
+        );
+        Ok(())
+    }
+}
+impl<T: TextMap> ExtractFromTextMap<T> for SpanContextState {
+    fn extract_from_text_map(carrier: &T) -> Result<Option<SpanContext>> {
+        use std::collections::HashMap;
+
+        // FIXME: optimize
+        let mut map = HashMap::new();
+        if let Some(v) = carrier.get(constants::TRACER_CONTEXT_HEADER_NAME) {
+            map.insert(constants::TRACER_CONTEXT_HEADER_NAME, v);
+        }
+        if let Some(v) = carrier.get(constants::JAEGER_DEBUG_HEADER) {
+            map.insert(constants::JAEGER_DEBUG_HEADER, v);
+        }
+        track!(Self::extract_from_http_header(&map))
+    }
+}
 impl<T> InjectToHttpHeader<T> for SpanContextState
 where
     T: SetHttpHeaderField,
@@ -336,7 +393,13 @@ where
 
 #[cfg(test)]
 mod test {
+    use rustracing::sampler::AllSampler;
+    use std::collections::HashMap;
+    use trackable::error::Failed;
+    use trackable::result::TestResult;
+
     use super::*;
+    use Tracer;
 
     #[test]
     fn trace_id_conversion_works() {
@@ -347,5 +410,33 @@ mod test {
         let id = TraceId { high: 1, low: 2 };
         assert_eq!(id.to_string(), "10000000000000002");
         assert_eq!("10000000000000002".parse::<TraceId>().unwrap(), id);
+    }
+
+    #[test]
+    fn inject_to_text_map_works() -> TestResult {
+        let (tracer, _span_rx) = Tracer::new(AllSampler);
+        let span = tracer.span("test").start();
+        let context = track_assert_some!(span.context(), Failed);
+
+        let mut map = HashMap::new();
+        track!(context.inject_to_text_map(&mut map))?;
+        assert!(map.contains_key(constants::TRACER_CONTEXT_HEADER_NAME));
+
+        Ok(())
+    }
+
+    #[test]
+    fn extract_from_text_map_works() -> TestResult {
+        let mut map = HashMap::new();
+        map.insert(
+            constants::TRACER_CONTEXT_HEADER_NAME.to_string(),
+            "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:1".to_string(),
+        );
+        let context = track!(SpanContext::extract_from_text_map(&map))?;
+        let context = track_assert_some!(context, Failed);
+        let trace_id = context.state().trace_id();
+        assert_eq!(trace_id.to_string(), "6309ab92c95468edea0dc1a9772ae2dc");
+
+        Ok(())
     }
 }
