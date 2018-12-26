@@ -29,11 +29,12 @@ impl HandleRequest for Hello {
 
     fn handle_request(&self, req: Req<Self::ReqBody>) -> Self::Reply {
         let mut carrier = HashMap::new();
-        for field in req.header().fields() {
-            carrier.insert(field.name().to_lowercase(), field.value().to_owned());
+        let header = req.header();
+        for field in header.fields() {
+            carrier.insert(field.name(), field.value());
         }
 
-        let context = track_try_unwrap!(SpanContext::extract_from_text_map(&carrier));
+        let context = track_try_unwrap!(SpanContext::extract_from_http_header(&carrier));
         let tracer = self.tracer.lock().expect("Cannot acquire lock");
         let _span = tracer
             .span("Hello::handle_request")

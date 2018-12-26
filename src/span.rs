@@ -15,7 +15,7 @@
 //! // Extraction
 //! let mut carrier = HashMap::new();
 //! carrier.insert(
-//!     "uber-trace-id".to_string(),
+//!     "uber-trace-id".to_string(),  // NOTE: The key must be lower-case
 //!     "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:1".to_string(),
 //! );
 //! let context = SpanContext::extract_from_text_map(&carrier)?.unwrap();
@@ -357,16 +357,12 @@ where
         let mut debug_id = None;
         let baggage_items = Vec::new(); // TODO: Support baggage items
         for (name, value) in carrier.fields() {
-            match name {
-                constants::TRACER_CONTEXT_HEADER_NAME => {
-                    let value = track!(str::from_utf8(value).map_err(error::from_utf8_error))?;
-                    state = Some(track!(value.parse())?);
-                }
-                constants::JAEGER_DEBUG_HEADER => {
-                    let value = track!(str::from_utf8(value).map_err(error::from_utf8_error))?;
-                    debug_id = Some(value.to_owned());
-                }
-                _ => {}
+            if name.eq_ignore_ascii_case(constants::TRACER_CONTEXT_HEADER_NAME) {
+                let value = track!(str::from_utf8(value).map_err(error::from_utf8_error))?;
+                state = Some(track!(value.parse())?);
+            } else if name.eq_ignore_ascii_case(constants::JAEGER_BAGGAGE_HEADER) {
+                let value = track!(str::from_utf8(value).map_err(error::from_utf8_error))?;
+                debug_id = Some(value.to_owned());
             }
         }
         if let Some(mut state) = state {
