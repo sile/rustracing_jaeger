@@ -7,11 +7,11 @@ use std::net::{SocketAddr, UdpSocket};
 use thrift_codec::message::Message;
 use thrift_codec::{BinaryEncode, CompactEncode};
 
-use constants;
-use error;
-use span::FinishedSpan;
-use thrift::{agent, jaeger};
-use Result;
+use crate::constants;
+use crate::error;
+use crate::span::FinishedSpan;
+use crate::thrift::{agent, jaeger};
+use crate::Result;
 
 /// Reporter for the agent which accepts jaeger.thrift over compact thrift protocol.
 #[derive(Debug)]

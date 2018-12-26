@@ -3,7 +3,7 @@ use rustracing::Tracer as InnerTracer;
 use std::borrow::Cow;
 use std::fmt;
 
-use span::{SpanContextState, SpanReceiver, StartSpanOptions};
+use crate::span::{SpanContextState, SpanReceiver, StartSpanOptions};
 
 /// Tracer.
 #[derive(Clone)]

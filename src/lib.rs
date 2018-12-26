@@ -6,12 +6,9 @@
 //! # Examples
 //!
 //! ```
-//! # extern crate rustracing;
-//! # extern crate rustracing_jaeger;
 //! use rustracing::sampler::AllSampler;
 //! use rustracing_jaeger::Tracer;
 //! use rustracing_jaeger::reporter::JaegerCompactReporter;
-//! # fn main() {
 //!
 //! // Creates a tracer
 //! let (tracer, span_rx) = Tracer::new(AllSampler);
@@ -27,20 +24,15 @@
 //! // Reports this span to the local jaeger agent
 //! let reporter = JaegerCompactReporter::new("sample_service").unwrap();
 //! reporter.report(&[span]).unwrap();
-//! # }
 //! ```
 
 #![warn(missing_docs)]
-extern crate hostname;
-extern crate rand;
-extern crate rustracing;
-extern crate thrift_codec;
 #[macro_use]
 extern crate trackable;
 
+pub use self::span::Span;
+pub use self::tracer::Tracer;
 pub use rustracing::{Error, ErrorKind, Result};
-pub use span::Span;
-pub use tracer::Tracer;
 
 pub mod reporter;
 pub mod span;
@@ -52,11 +44,10 @@ mod tracer;
 
 #[cfg(test)]
 mod tests {
+    use crate::reporter::JaegerCompactReporter;
+    use crate::Tracer;
     use rustracing::sampler::AllSampler;
     use rustracing::tag::Tag;
-
-    use reporter::JaegerCompactReporter;
-    use Tracer;
 
     #[test]
     fn it_works() {

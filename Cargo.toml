@@ -8,6 +8,7 @@ repository = "https://github.com/sile/rustracing_jaeger"
 readme = "README.md"
 keywords = ["opentracing", "jaeger"]
 license = "MIT"
+edition = "2018"
 
 [badges]
 travis-ci = {repository = "sile/rustracing_jaeger"}

@@ -8,7 +8,6 @@
 //! The simplest way is to use `HashMap` as the carrier as follows:
 //!
 //! ```
-//! # extern crate rustracing_jaeger;
 //! use std::collections::HashMap;
 //! use rustracing_jaeger::span::SpanContext;
 //!
@@ -36,6 +35,9 @@
 //! - [constants.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/constants.go)
 //! - [context.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/context.go)
 //! - [propagation.go](https://github.com/uber/jaeger-client-go/tree/v2.9.0/propagation.go)
+use crate::constants;
+use crate::error;
+use crate::{Error, ErrorKind, Result};
 use rand;
 use rustracing;
 use rustracing::carrier::{
@@ -45,10 +47,6 @@ use rustracing::carrier::{
 use rustracing::sampler::BoxSampler;
 use std::fmt;
 use std::str::{self, FromStr};
-
-use constants;
-use error;
-use {Error, ErrorKind, Result};
 
 /// Span.
 pub type Span = rustracing::span::Span<SpanContextState>;
@@ -393,13 +391,12 @@ where
 
 #[cfg(test)]
 mod test {
+    use super::*;
+    use crate::Tracer;
     use rustracing::sampler::AllSampler;
     use std::collections::HashMap;
     use trackable::error::Failed;
     use trackable::result::TestResult;
-
-    use super::*;
-    use Tracer;
 
     #[test]
     fn trace_id_conversion_works() {

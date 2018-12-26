@@ -3,8 +3,8 @@ use rustracing;
 use std::time::{SystemTime, UNIX_EPOCH};
 use thrift_codec::data::{Field, List, Struct};
 
-use constants;
-use span::{FinishedSpan, SpanReference};
+use crate::constants;
+use crate::span::{FinishedSpan, SpanReference};
 
 /// `TagKind` denotes the kind of a `Tag`'s value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

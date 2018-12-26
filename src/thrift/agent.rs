@@ -2,7 +2,7 @@
 use thrift_codec::data::Struct;
 use thrift_codec::message::Message;
 
-use thrift::jaeger::Batch;
+use crate::thrift::jaeger::Batch;
 
 #[derive(Debug, Clone)]
 pub struct EmitBatchNotification {

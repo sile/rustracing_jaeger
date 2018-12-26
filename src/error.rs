@@ -2,7 +2,7 @@ use std;
 use thrift_codec;
 use trackable::error::ErrorKindExt;
 
-use {Error, ErrorKind};
+use crate::{Error, ErrorKind};
 
 pub fn from_io_error(f: std::io::Error) -> Error {
     ErrorKind::Other.cause(f).into()
