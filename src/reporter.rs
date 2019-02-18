@@ -21,7 +21,7 @@ impl JaegerCompactReporter {
     ///
     /// # Errors
     ///
-    /// If the UDP socket used to report spans can not be bound to `127.0.0.1:0`,
+    /// If the UDP socket used to report spans can not be bound to `0.0.0.0:0`,
     /// it will return an error which has the kind `ErrorKind::Other`.
     pub fn new(service_name: &str) -> Result<Self> {
         let inner = track!(JaegerReporter::new(service_name, 6831))?;
@@ -68,7 +68,7 @@ impl JaegerBinaryReporter {
     ///
     /// # Errors
     ///
-    /// If the UDP socket used to report spans can not be bound to `127.0.0.1:0`,
+    /// If the UDP socket used to report spans can not be bound to `0.0.0.0:0`,
     /// it will return an error which has the kind `ErrorKind::Other`.
     pub fn new(service_name: &str) -> Result<Self> {
         let inner = track!(JaegerReporter::new(service_name, 6832))?;
@@ -115,7 +115,7 @@ struct JaegerReporter {
 }
 impl JaegerReporter {
     fn new(service_name: &str, port: u16) -> Result<Self> {
-        let socket = track!(UdpSocket::bind("127.0.0.1:0").map_err(error::from_io_error))?;
+        let socket = track!(UdpSocket::bind("0.0.0.0:0").map_err(error::from_io_error))?;
         let process = jaeger::Process {
             service_name: service_name.to_owned(),
             tags: Vec::new(),
