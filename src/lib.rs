@@ -29,6 +29,7 @@
 #![warn(missing_docs)]
 #[macro_use]
 extern crate trackable;
+extern crate percent_encoding;
 
 pub use self::span::Span;
 pub use self::tracer::Tracer;
