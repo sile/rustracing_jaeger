@@ -47,6 +47,7 @@ use rustracing::carrier::{
 use rustracing::sampler::BoxSampler;
 use std::fmt;
 use std::str::{self, FromStr};
+use percent_encoding::percent_decode;
 
 /// Span.
 pub type Span = rustracing::span::Span<SpanContextState>;
@@ -358,9 +359,10 @@ where
         let baggage_items = Vec::new(); // TODO: Support baggage items
         for (name, value) in carrier.fields() {
             if name.eq_ignore_ascii_case(constants::TRACER_CONTEXT_HEADER_NAME) {
-                let value = track!(str::from_utf8(value).map_err(error::from_utf8_error))?;
+                let value = percent_decode(value);
+                let value = track!(value.decode_utf8().map_err(error::from_utf8_error))?;
                 state = Some(track!(value.parse())?);
-            } else if name.eq_ignore_ascii_case(constants::JAEGER_BAGGAGE_HEADER) {
+            } else if name.eq_ignore_ascii_case(constants::JAEGER_DEBUG_HEADER) {
                 let value = track!(str::from_utf8(value).map_err(error::from_utf8_error))?;
                 debug_id = Some(value.to_owned());
             }
@@ -429,6 +431,38 @@ mod test {
         let context = track_assert_some!(context, Failed);
         let trace_id = context.state().trace_id();
         assert_eq!(trace_id.to_string(), "6309ab92c95468edea0dc1a9772ae2dc");
+
+        Ok(())
+    }
+
+    /// Official Java client `io.jaegertracing:jaeger-client:0.33.1`
+    /// sends HTTP header `uber-trace-id` with url-encoding.
+    #[test]
+    fn extract_from_urlencoded_text_map_works() -> TestResult {
+        let mut map = HashMap::new();
+        map.insert(
+            constants::TRACER_CONTEXT_HEADER_NAME.to_string(),
+            "6309ab92c95468edea0dc1a9772ae2dc%3A409423a204bc17a8%3A0%3A1".to_string(),
+        );
+        let context = track!(SpanContext::extract_from_text_map(&map))?;
+        let context = track_assert_some!(context, Failed);
+        let trace_id = context.state().trace_id();
+        assert_eq!(trace_id.to_string(), "6309ab92c95468edea0dc1a9772ae2dc");
+
+        Ok(())
+    }
+
+    #[test]
+    fn extract_debug_id_works() -> TestResult {
+        let mut map = HashMap::new();
+        map.insert(
+            constants::JAEGER_DEBUG_HEADER.to_string(),
+            "abcdef".to_string(),
+        );
+        let context = track!(SpanContext::extract_from_text_map(&map))?;
+        let context = track_assert_some!(context, Failed);
+        let debug_id = context.state().debug_id();
+        assert_eq!(debug_id, Some("abcdef"));
 
         Ok(())
     }

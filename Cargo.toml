@@ -16,6 +16,7 @@ codecov = {repository = "sile/rustracing_jaeger"}
 
 [dependencies]
 hostname = "0.1"
+percent-encoding = "1.0"
 rand = "0.6"
 rustracing = "0.1.8"
 thrift_codec = "0.1"
