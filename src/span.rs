@@ -60,6 +60,8 @@ pub type FinishedSpan = rustracing::span::FinishedSpan<SpanContextState>;
 
 /// Span receiver.
 pub type SpanReceiver = rustracing::span::SpanReceiver<SpanContextState>;
+/// Sender of finished spans to the destination channel.
+pub type SpanSender = rustracing::span::SpanSender<SpanContextState>;
 
 /// Options for starting a span.
 pub type StartSpanOptions<'a> =
@@ -409,7 +411,8 @@ mod test {
 
     #[test]
     fn inject_to_text_map_works() -> TestResult {
-        let (tracer, _span_rx) = Tracer::new(AllSampler);
+        let (span_tx, _span_rx) = crossbeam_channel::bounded(10);
+        let tracer = Tracer::new(AllSampler, span_tx);
         let span = tracer.span("test").start();
         let context = track_assert_some!(span.context(), Failed);
 

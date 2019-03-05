@@ -25,7 +25,8 @@ use rustracing_jaeger::Tracer;
 use rustracing_jaeger::reporter::JaegerCompactReporter;
 
 // Creates a tracer
-let (tracer, span_rx) = Tracer::new(AllSampler);
+let (span_tx, span_rx) = crossbeam_channel::bounded(10);
+let tracer = Tracer::new(AllSampler, span_tx);
 {
     let span = tracer.span("sample_op").start();
     // Do something

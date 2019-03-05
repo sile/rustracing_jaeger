@@ -3,7 +3,7 @@ use rustracing::Tracer as InnerTracer;
 use std::borrow::Cow;
 use std::fmt;
 
-use crate::span::{SpanContextState, SpanReceiver, StartSpanOptions};
+use crate::span::{SpanContextState, SpanSender, StartSpanOptions};
 
 /// Tracer.
 #[derive(Clone)]
@@ -12,12 +12,12 @@ pub struct Tracer {
 }
 impl Tracer {
     /// Makes a new `Tracer` instance.
-    pub fn new<S>(sampler: S) -> (Self, SpanReceiver)
+    pub fn new<S>(sampler: S, span_tx: SpanSender) -> Self
     where
         S: Sampler<SpanContextState> + Send + Sync + 'static,
     {
-        let (inner, rx) = InnerTracer::new(sampler.boxed());
-        (Tracer { inner }, rx)
+        let inner = InnerTracer::new(sampler.boxed(), span_tx);
+        Tracer { inner }
     }
 
     /// Clone with the given `sampler`.
@@ -53,7 +53,8 @@ mod test {
     fn is_tracer_sendable() {
         fn is_send<T: Send>(_: T) {}
 
-        let (tracer, _) = Tracer::new(NullSampler);
+        let (span_tx, _span_rx) = crossbeam_channel::bounded(10);
+        let tracer = Tracer::new(NullSampler, span_tx);
         is_send(tracer);
     }
 }
