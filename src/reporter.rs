@@ -3,7 +3,7 @@
 //! [jaeger agent]: http://jaeger.readthedocs.io/en/latest/deployment/#agent
 use hostname;
 use rustracing::tag::Tag;
-use std::net::{SocketAddr, IpAddr, Ipv4Addr, Ipv6Addr, UdpSocket};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket};
 use thrift_codec::message::Message;
 use thrift_codec::{BinaryEncode, CompactEncode};
 
@@ -53,8 +53,8 @@ impl JaegerCompactReporter {
         track!(self.0.report(spans, |message| {
             let mut bytes = Vec::new();
             track!(message
-                .compact_encode(&mut bytes,)
-                .map_err(error::from_thrift_error,))?;
+                .compact_encode(&mut bytes)
+                .map_err(error::from_thrift_error))?;
             Ok(bytes)
         }))
     }
@@ -79,7 +79,7 @@ impl JaegerBinaryReporter {
     ///
     /// The default address is `127.0.0.1:6832`.
     pub fn set_agent_addr(&mut self, addr: SocketAddr) -> Result<()> {
-        self.0.set_agent_addr(addr)
+        track!(self.0.set_agent_addr(addr))
     }
 
     /// Adds `tag` to this service.
@@ -100,8 +100,8 @@ impl JaegerBinaryReporter {
         track!(self.0.report(spans, |message| {
             let mut bytes = Vec::new();
             track!(message
-                .binary_encode(&mut bytes,)
-                .map_err(error::from_thrift_error,))?;
+                .binary_encode(&mut bytes)
+                .map_err(error::from_thrift_error))?;
             Ok(bytes)
         }))
     }
@@ -116,7 +116,7 @@ struct JaegerReporter {
 impl JaegerReporter {
     fn new(service_name: &str, port: u16) -> Result<Self> {
         let agent = SocketAddr::from(([127, 0, 0, 1], port));
-        let socket = udp_socket(agent)?;
+        let socket = track!(udp_socket(agent))?;
         let process = jaeger::Process {
             service_name: service_name.to_owned(),
             tags: Vec::new(),
@@ -137,7 +137,7 @@ impl JaegerReporter {
         Ok(this)
     }
     fn set_agent_addr(&mut self, addr: SocketAddr) -> Result<()> {
-        self.socket = udp_socket(addr)?;
+        self.socket = track!(udp_socket(addr))?;
         self.agent = addr;
 
         Ok(())
@@ -157,8 +157,8 @@ impl JaegerReporter {
         let bytes = track!(encode(message))?;
         track!(self
             .socket
-            .send_to(&bytes, self.agent,)
-            .map_err(error::from_io_error,))?;
+            .send_to(&bytes, self.agent)
+            .map_err(error::from_io_error))?;
         Ok(())
     }
 }
@@ -170,5 +170,6 @@ fn udp_socket(agent: SocketAddr) -> Result<UdpSocket> {
         } else {
             SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0)
         }
-    }).map_err(error::from_io_error))
+    })
+    .map_err(error::from_io_error))
 }
