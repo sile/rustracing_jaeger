@@ -12,10 +12,9 @@ use rustracing_jaeger::reporter::JaegerCompactReporter;
 use rustracing_jaeger::span::SpanContext;
 use rustracing_jaeger::Tracer;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
 
 struct Hello {
-    tracer: Arc<Mutex<Tracer>>,
+    tracer: Tracer,
 }
 impl HandleRequest for Hello {
     const METHOD: &'static str = "GET";
@@ -35,8 +34,8 @@ impl HandleRequest for Hello {
         }
 
         let context = track_try_unwrap!(SpanContext::extract_from_http_header(&carrier));
-        let tracer = self.tracer.lock().expect("Cannot acquire lock");
-        let _span = tracer
+        let _span = self
+            .tracer
             .span("Hello::handle_request")
             .child_of(&context)
             .start();
@@ -46,10 +45,9 @@ impl HandleRequest for Hello {
 }
 
 fn main() -> trackable::result::MainResult {
-    let (tracer, span_rx) = Tracer::new(AllSampler);
-    let handler = Hello {
-        tracer: Arc::new(Mutex::new(tracer)),
-    };
+    let (span_tx, span_rx) = crossbeam_channel::bounded(100);
+    let tracer = Tracer::with_sender(AllSampler, span_tx);
+    let handler = Hello { tracer };
     std::thread::spawn(move || {
         let reporter = track_try_unwrap!(JaegerCompactReporter::new("http_hello_server"));
         for span in span_rx {

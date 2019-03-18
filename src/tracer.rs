@@ -3,7 +3,7 @@ use rustracing::Tracer as InnerTracer;
 use std::borrow::Cow;
 use std::fmt;
 
-use crate::span::{SpanContextState, SpanReceiver, StartSpanOptions};
+use crate::span::{SpanContextState, SpanReceiver, SpanSender, StartSpanOptions};
 
 /// Tracer.
 #[derive(Clone)]
@@ -11,13 +11,25 @@ pub struct Tracer {
     inner: InnerTracer<BoxSampler<SpanContextState>, SpanContextState>,
 }
 impl Tracer {
-    /// Makes a new `Tracer` instance.
+    /// This constructor is mainly for backward compatibility, it has the same interface
+    /// as in previous versions except the type of `SpanReceiver`.
+    /// It builds an unbounded channel which may cause memory issues if there is no reader,
+    /// prefer `with_sender()` alternative with a bounded one.
     pub fn new<S>(sampler: S) -> (Self, SpanReceiver)
     where
         S: Sampler<SpanContextState> + Send + Sync + 'static,
     {
         let (inner, rx) = InnerTracer::new(sampler.boxed());
         (Tracer { inner }, rx)
+    }
+
+    /// Makes a new `Tracer` instance.
+    pub fn with_sender<S>(sampler: S, span_tx: SpanSender) -> Self
+    where
+        S: Sampler<SpanContextState> + Send + Sync + 'static,
+    {
+        let inner = InnerTracer::with_sender(sampler.boxed(), span_tx);
+        Tracer { inner }
     }
 
     /// Clone with the given `sampler`.
@@ -53,7 +65,8 @@ mod test {
     fn is_tracer_sendable() {
         fn is_send<T: Send>(_: T) {}
 
-        let (tracer, _) = Tracer::new(NullSampler);
+        let (span_tx, _span_rx) = crossbeam_channel::bounded(10);
+        let tracer = Tracer::with_sender(NullSampler, span_tx);
         is_send(tracer);
     }
 }
