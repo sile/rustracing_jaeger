@@ -11,6 +11,8 @@ pub struct Tracer {
     inner: InnerTracer<BoxSampler<SpanContextState>, SpanContextState>,
 }
 impl Tracer {
+    /// Makes a new `Tracer` instance with an unbounded channel.
+    ///
     /// This constructor is mainly for backward compatibility, it has the same interface
     /// as in previous versions except the type of `SpanReceiver`.
     /// It builds an unbounded channel which may cause memory issues if there is no reader,

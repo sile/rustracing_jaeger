@@ -60,6 +60,7 @@ pub type FinishedSpan = rustracing::span::FinishedSpan<SpanContextState>;
 
 /// Span receiver.
 pub type SpanReceiver = rustracing::span::SpanReceiver<SpanContextState>;
+
 /// Sender of finished spans to the destination channel.
 pub type SpanSender = rustracing::span::SpanSender<SpanContextState>;
 
