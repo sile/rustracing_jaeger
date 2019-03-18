@@ -19,9 +19,7 @@ crossbeam-channel = "0.3"
 hostname = "0.1"
 percent-encoding = "1.0"
 rand = "0.6"
-# TODO: Temporary for integration
-#rustracing = "0.1.8"
-rustracing = { git = "https://github.com/mixalturek/rustracing.git", branch="no-mutex" }
+rustracing = "0.2.0"
 thrift_codec = "0.1"
 trackable = "0.2"
 
