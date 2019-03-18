@@ -10,7 +10,7 @@ use std::time::Duration;
 
 fn main() -> trackable::result::MainResult {
     let (span_tx, span_rx) = crossbeam_channel::bounded(10);
-    let tracer = Tracer::new(AllSampler, span_tx);
+    let tracer = Tracer::with_sender(AllSampler, span_tx);
     {
         let span0 = tracer.span("main").start();
         thread::sleep(Duration::from_millis(10));

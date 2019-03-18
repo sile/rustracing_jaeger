@@ -46,7 +46,7 @@ impl HandleRequest for Hello {
 
 fn main() -> trackable::result::MainResult {
     let (span_tx, span_rx) = crossbeam_channel::bounded(100);
-    let tracer = Tracer::new(AllSampler, span_tx);
+    let tracer = Tracer::with_sender(AllSampler, span_tx);
     let handler = Hello { tracer };
     std::thread::spawn(move || {
         let reporter = track_try_unwrap!(JaegerCompactReporter::new("http_hello_server"));

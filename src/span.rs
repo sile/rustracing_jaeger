@@ -412,7 +412,7 @@ mod test {
     #[test]
     fn inject_to_text_map_works() -> TestResult {
         let (span_tx, _span_rx) = crossbeam_channel::bounded(10);
-        let tracer = Tracer::new(AllSampler, span_tx);
+        let tracer = Tracer::with_sender(AllSampler, span_tx);
         let span = tracer.span("test").start();
         let context = track_assert_some!(span.context(), Failed);
 
