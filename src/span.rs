@@ -42,11 +42,12 @@ use percent_encoding::percent_decode;
 use rand;
 use rustracing;
 use rustracing::carrier::{
-    ExtractFromHttpHeader, ExtractFromTextMap, InjectToHttpHeader, InjectToTextMap,
-    IterHttpHeaderFields, SetHttpHeaderField, TextMap,
+    ExtractFromBinary, ExtractFromHttpHeader, ExtractFromTextMap, InjectToBinary,
+    InjectToHttpHeader, InjectToTextMap, IterHttpHeaderFields, SetHttpHeaderField, TextMap,
 };
 use rustracing::sampler::BoxSampler;
 use std::fmt;
+use std::io::{Read, Write};
 use std::str::{self, FromStr};
 
 /// Span.
@@ -156,6 +157,7 @@ impl FromStr for TraceId {
 pub struct SpanContextStateBuilder {
     trace_id: Option<TraceId>,
     span_id: Option<u64>,
+    parent_span_id: Option<u64>,
     flags: u32,
     debug_id: String,
 }
@@ -165,6 +167,7 @@ impl SpanContextStateBuilder {
         SpanContextStateBuilder {
             trace_id: None,
             span_id: None,
+            parent_span_id: None,
             flags: FLAG_SAMPLED,
             debug_id: String::new(),
         }
@@ -202,6 +205,7 @@ impl SpanContextStateBuilder {
         SpanContextState {
             trace_id: self.trace_id.unwrap_or_default(),
             span_id: self.span_id.unwrap_or_else(rand::random),
+            parent_span_id: self.parent_span_id.unwrap_or_default(),
             flags: self.flags,
             debug_id: self.debug_id,
         }
@@ -213,11 +217,12 @@ impl Default for SpanContextStateBuilder {
     }
 }
 
-/// Jager specific span context state.
+/// Jaeger specific span context state.
 #[derive(Debug, Clone)]
 pub struct SpanContextState {
     trace_id: TraceId,
     span_id: u64,
+    parent_span_id: u64,
     flags: u32,
     debug_id: String,
 }
@@ -230,6 +235,11 @@ impl SpanContextState {
     /// Returns the identifier of this span.
     pub fn span_id(&self) -> u64 {
         self.span_id
+    }
+
+    /// Returns the identifier of the parent span.
+    pub fn parent_span_id(&self) -> u64 {
+        self.parent_span_id
     }
 
     /// Returns `true` if this span has been sampled (i.e., being traced).
@@ -265,6 +275,7 @@ impl SpanContextState {
         SpanContextState {
             trace_id,
             span_id: rand::random(),
+            parent_span_id: 0,
             flags: FLAG_SAMPLED,
             debug_id: String::new(),
         }
@@ -272,11 +283,10 @@ impl SpanContextState {
 }
 impl fmt::Display for SpanContextState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let dummy_parent_id = 0;
         write!(
             f,
             "{}:{:x}:{:x}:{:x}",
-            self.trace_id, self.span_id, dummy_parent_id, self.flags
+            self.trace_id, self.span_id, self.parent_span_id, self.flags
         )
     }
 }
@@ -293,13 +303,14 @@ impl FromStr for SpanContextState {
         let trace_id = track!(token!().parse())?;
         let span_id =
             track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
-        let _parent_span_id =
+        let parent_span_id =
             track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
         let flags = track!(u32::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
 
         Ok(SpanContextState {
             trace_id,
             span_id,
+            parent_span_id,
             flags,
             debug_id: String::new(),
         })
@@ -380,6 +391,7 @@ where
             let state = SpanContextState {
                 trace_id: TraceId { high: 0, low: 0 },
                 span_id: 0,
+                parent_span_id: 0,
                 flags: FLAG_DEBUG,
                 debug_id,
             };
@@ -389,6 +401,82 @@ where
         }
     }
 }
+impl<T> InjectToBinary<T> for SpanContextState
+where
+    T: Write,
+{
+    fn inject_to_binary(context: &SpanContext, carrier: &mut T) -> Result<()> {
+        let mut u64buf: [u8; 8];
+        let u32buf: [u8; 4];
+        let u8buf: [u8; 1];
+
+        u64buf = context.state().trace_id.high.to_be_bytes();
+        carrier
+            .write(&u64buf)
+            .expect("could not write trace_id.high");
+        u64buf = context.state().trace_id.low.to_be_bytes();
+        carrier
+            .write(&u64buf)
+            .expect("could not write trace_id.low");
+        u64buf = context.state().span_id.to_be_bytes();
+        carrier.write(&u64buf).expect("could not write span_id");
+        u64buf = context.state().parent_span_id.to_be_bytes();
+        carrier
+            .write(&u64buf)
+            .expect("could not write parent_span_id");
+        u8buf = [context.state().flags as u8];
+        carrier.write(&u8buf).expect("could not write flags");
+        // TODO: Support baggage items
+        u32buf = [0; 4];
+        carrier
+            .write(&u32buf)
+            .expect("could not write number of baggage items");
+
+        Ok(())
+    }
+}
+impl<T> ExtractFromBinary<T> for SpanContextState
+where
+    T: Read,
+{
+    fn extract_from_binary(carrier: &mut T) -> Result<Option<SpanContext>> {
+        let baggage_items = Vec::new(); // TODO: Support baggage items
+
+        let mut u64buf: [u8; 8] = [0; 8];
+        let mut u8buf: [u8; 1] = [0; 1];
+
+        carrier
+            .read(&mut u64buf[..])
+            .expect("could not read trace_id.high");
+        let trace_id_high = u64::from_be_bytes(u64buf);
+        carrier
+            .read(&mut u64buf[..])
+            .expect("could not read trace_id.low");
+        let trace_id_low = u64::from_be_bytes(u64buf);
+        carrier
+            .read(&mut u64buf[..])
+            .expect("could not read span_id");
+        let span_id = u64::from_be_bytes(u64buf);
+        carrier
+            .read(&mut u64buf[..])
+            .expect("could not read parent_span_id");
+        let parent_span_id = u64::from_be_bytes(u64buf);
+        carrier.read(&mut u8buf[..]).expect("could not read flags");
+        let flags = u8buf[0];
+
+        let state = SpanContextState {
+            trace_id: TraceId {
+                high: trace_id_high,
+                low: trace_id_low,
+            },
+            span_id,
+            parent_span_id,
+            flags: flags as u32,
+            debug_id: String::new(),
+        };
+        Ok(Some(SpanContext::new(state, baggage_items)))
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -396,6 +484,7 @@ mod test {
     use crate::Tracer;
     use rustracing::sampler::AllSampler;
     use std::collections::HashMap;
+    use std::io::Cursor;
     use trackable::error::Failed;
     use trackable::result::TestResult;
 
@@ -467,6 +556,72 @@ mod test {
         let context = track_assert_some!(context, Failed);
         let debug_id = context.state().debug_id();
         assert_eq!(debug_id, Some("abcdef"));
+
+        Ok(())
+    }
+
+    #[test]
+    fn inject_to_binary_works() -> TestResult {
+        let (tracer, _span_rx) = Tracer::new(AllSampler);
+        let parent_span = tracer.span("parent_span_test").start();
+        let span = tracer
+            .span("span_to_be_injected_test")
+            .child_of(parent_span.context().unwrap())
+            .start();
+        let context = track_assert_some!(span.context(), Failed);
+
+        let mut span_buf: Cursor<Vec<u8>> = Cursor::new(vec![]);
+        track!(context.clone().inject_to_binary(&mut span_buf))?;
+
+        // deliberately convert io::Cursor<Vec<u8>> to Vec<u8> and re-read elements
+        let sbv = span_buf.get_ref().to_vec();
+        let mut u64buf: [u8; 8] = [0; 8];
+        let mut u32buf: [u8; 4] = [0; 4];
+        let mut u8buf: [u8; 1] = [0; 1];
+
+        u64buf.copy_from_slice(&sbv[0..8]);
+        assert_eq!(context.state().trace_id().high, u64::from_be_bytes(u64buf));
+        u64buf.copy_from_slice(&sbv[8..16]);
+        assert_eq!(context.state().trace_id().low, u64::from_be_bytes(u64buf));
+        u64buf.copy_from_slice(&sbv[16..24]);
+        assert_eq!(context.state().span_id(), u64::from_be_bytes(u64buf));
+        u64buf.copy_from_slice(&sbv[24..32]);
+        assert_eq!(context.state().parent_span_id(), u64::from_be_bytes(u64buf));
+        u8buf.copy_from_slice(&sbv[32..33]);
+        assert_eq!(context.state().flags(), u8buf[0] as u32);
+        u32buf.copy_from_slice(&sbv[33..37]);
+        assert_eq!(0, u32::from_be_bytes(u32buf)); // no baggage item length
+
+        Ok(())
+    }
+
+    #[test]
+    fn extract_from_binary_works() -> TestResult {
+        let mut span_buf: Cursor<Vec<u8>> = Cursor::new(vec![
+            0xab, 0xcd, 0xef, 0xed, 0xcb, 0xab, 0xcd, 0xef, 0xfe, 0xdc, 0xba, 0xbc, 0xde, 0xfe,
+            0xdc, 0xba, // trace_id=abcdefedcbabcdef fedcbabcdefedcba
+            0, 0, 0, 0, 0, 0, 0, 11, // span_id=11
+            0, 0, 0, 0, 0, 0, 0, 12, // parent_span_id=12
+            1,  // flags=1
+            0, 0, 0, 0, // baggage item length=0
+        ]);
+
+        let context = track!(SpanContext::extract_from_binary(&mut span_buf))?;
+        let context = track_assert_some!(context, Failed);
+        assert_eq!(
+            context.state().trace_id().to_string(),
+            "abcdefedcbabcdeffedcbabcdefedcba"
+        );
+        assert_eq!(context.state().span_id(), 11);
+        assert_eq!(context.state().parent_span_id(), 12);
+        assert_eq!(context.state().flags(), 1);
+
+        // make a span from this context
+        let (tracer, _span_rx) = Tracer::new(AllSampler);
+        tracer
+            .span("test_from_spancontext")
+            .child_of(&context)
+            .start();
 
         Ok(())
     }

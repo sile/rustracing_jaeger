@@ -118,10 +118,17 @@ pub struct SpanRef {
     pub trace_id_low: i64,
     pub trace_id_high: i64,
     pub span_id: i64,
+    pub parent_span_id: i64,
 }
 impl From<SpanRef> for Struct {
     fn from(f: SpanRef) -> Self {
-        Struct::from((f.kind as i32, f.trace_id_low, f.trace_id_high, f.span_id))
+        Struct::from((
+            f.kind as i32,
+            f.trace_id_low,
+            f.trace_id_high,
+            f.span_id,
+            f.parent_span_id,
+        ))
     }
 }
 impl<'a> From<&'a SpanReference> for SpanRef {
@@ -136,6 +143,7 @@ impl<'a> From<&'a SpanReference> for SpanRef {
             trace_id_low: f.span().trace_id().low as i64,
             trace_id_high: f.span().trace_id().high as i64,
             span_id: f.span().span_id() as i64,
+            parent_span_id: f.span().parent_span_id() as i64,
         }
     }
 }
