@@ -157,7 +157,6 @@ impl FromStr for TraceId {
 pub struct SpanContextStateBuilder {
     trace_id: Option<TraceId>,
     span_id: Option<u64>,
-    parent_span_id: Option<u64>,
     flags: u32,
     debug_id: String,
 }
@@ -167,7 +166,6 @@ impl SpanContextStateBuilder {
         SpanContextStateBuilder {
             trace_id: None,
             span_id: None,
-            parent_span_id: None,
             flags: FLAG_SAMPLED,
             debug_id: String::new(),
         }
@@ -205,7 +203,6 @@ impl SpanContextStateBuilder {
         SpanContextState {
             trace_id: self.trace_id.unwrap_or_default(),
             span_id: self.span_id.unwrap_or_else(rand::random),
-            parent_span_id: self.parent_span_id.unwrap_or_default(),
             flags: self.flags,
             debug_id: self.debug_id,
         }
@@ -222,7 +219,6 @@ impl Default for SpanContextStateBuilder {
 pub struct SpanContextState {
     trace_id: TraceId,
     span_id: u64,
-    parent_span_id: u64,
     flags: u32,
     debug_id: String,
 }
@@ -235,11 +231,6 @@ impl SpanContextState {
     /// Returns the identifier of this span.
     pub fn span_id(&self) -> u64 {
         self.span_id
-    }
-
-    /// Returns the identifier of the parent span.
-    pub fn parent_span_id(&self) -> u64 {
-        self.parent_span_id
     }
 
     /// Returns `true` if this span has been sampled (i.e., being traced).
@@ -275,7 +266,6 @@ impl SpanContextState {
         SpanContextState {
             trace_id,
             span_id: rand::random(),
-            parent_span_id: 0,
             flags: FLAG_SAMPLED,
             debug_id: String::new(),
         }
@@ -283,10 +273,11 @@ impl SpanContextState {
 }
 impl fmt::Display for SpanContextState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let dummy_parent_id = 0;
         write!(
             f,
             "{}:{:x}:{:x}:{:x}",
-            self.trace_id, self.span_id, self.parent_span_id, self.flags
+            self.trace_id, self.span_id, dummy_parent_id, self.flags
         )
     }
 }
@@ -303,14 +294,13 @@ impl FromStr for SpanContextState {
         let trace_id = track!(token!().parse())?;
         let span_id =
             track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
-        let parent_span_id =
+        let _parent_span_id =
             track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
         let flags = track!(u32::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
 
         Ok(SpanContextState {
             trace_id,
             span_id,
-            parent_span_id,
             flags,
             debug_id: String::new(),
         })
@@ -391,7 +381,6 @@ where
             let state = SpanContextState {
                 trace_id: TraceId { high: 0, low: 0 },
                 span_id: 0,
-                parent_span_id: 0,
                 flags: FLAG_DEBUG,
                 debug_id,
             };
@@ -416,7 +405,8 @@ where
         track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u64buf = context.state().span_id.to_be_bytes();
         track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
-        u64buf = context.state().parent_span_id.to_be_bytes();
+        // parent_span_id attribute is obsolete, write zeros.
+        u64buf = [0; 8];
         track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u8buf = [context.state().flags as u8];
         track!(carrier.write(&u8buf).map_err(error::from_io_error))?;
@@ -444,7 +434,7 @@ where
         track!(carrier.read(&mut u64buf[..]).map_err(error::from_io_error))?;
         let span_id = u64::from_be_bytes(u64buf);
         track!(carrier.read(&mut u64buf[..]).map_err(error::from_io_error))?;
-        let parent_span_id = u64::from_be_bytes(u64buf);
+        // parent_span_id attribute is obsolete. Ignore storing it.
         track!(carrier.read(&mut u8buf[..]).map_err(error::from_io_error))?;
         let flags = u8buf[0];
 
@@ -454,7 +444,6 @@ where
                 low: trace_id_low,
             },
             span_id,
-            parent_span_id,
             flags: flags as u32,
             debug_id: String::new(),
         };
@@ -570,7 +559,7 @@ mod test {
         u64buf.copy_from_slice(&sbv[16..24]);
         assert_eq!(context.state().span_id(), u64::from_be_bytes(u64buf));
         u64buf.copy_from_slice(&sbv[24..32]);
-        assert_eq!(context.state().parent_span_id(), u64::from_be_bytes(u64buf));
+        assert_eq!(0, u64::from_be_bytes(u64buf)); // parent_span_id attribute is obsolete.
         u8buf.copy_from_slice(&sbv[32..33]);
         assert_eq!(context.state().flags(), u8buf[0] as u32);
         u32buf.copy_from_slice(&sbv[33..37]);
@@ -597,7 +586,6 @@ mod test {
             "abcdefedcbabcdeffedcbabcdefedcba"
         );
         assert_eq!(context.state().span_id(), 11);
-        assert_eq!(context.state().parent_span_id(), 12);
         assert_eq!(context.state().flags(), 1);
 
         // make a span from this context
