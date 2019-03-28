@@ -411,26 +411,18 @@ where
         let u8buf: [u8; 1];
 
         u64buf = context.state().trace_id.high.to_be_bytes();
-        carrier
-            .write(&u64buf)
-            .expect("could not write trace_id.high");
+        track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u64buf = context.state().trace_id.low.to_be_bytes();
-        carrier
-            .write(&u64buf)
-            .expect("could not write trace_id.low");
+        track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u64buf = context.state().span_id.to_be_bytes();
-        carrier.write(&u64buf).expect("could not write span_id");
+        track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u64buf = context.state().parent_span_id.to_be_bytes();
-        carrier
-            .write(&u64buf)
-            .expect("could not write parent_span_id");
+        track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u8buf = [context.state().flags as u8];
-        carrier.write(&u8buf).expect("could not write flags");
+        track!(carrier.write(&u8buf).map_err(error::from_io_error))?;
         // TODO: Support baggage items
         u32buf = [0; 4];
-        carrier
-            .write(&u32buf)
-            .expect("could not write number of baggage items");
+        track!(carrier.write(&u32buf).map_err(error::from_io_error))?;
 
         Ok(())
     }
@@ -445,23 +437,15 @@ where
         let mut u64buf: [u8; 8] = [0; 8];
         let mut u8buf: [u8; 1] = [0; 1];
 
-        carrier
-            .read(&mut u64buf[..])
-            .expect("could not read trace_id.high");
+        track!(carrier.read(&mut u64buf[..]).map_err(error::from_io_error))?;
         let trace_id_high = u64::from_be_bytes(u64buf);
-        carrier
-            .read(&mut u64buf[..])
-            .expect("could not read trace_id.low");
+        track!(carrier.read(&mut u64buf[..]).map_err(error::from_io_error))?;
         let trace_id_low = u64::from_be_bytes(u64buf);
-        carrier
-            .read(&mut u64buf[..])
-            .expect("could not read span_id");
+        track!(carrier.read(&mut u64buf[..]).map_err(error::from_io_error))?;
         let span_id = u64::from_be_bytes(u64buf);
-        carrier
-            .read(&mut u64buf[..])
-            .expect("could not read parent_span_id");
+        track!(carrier.read(&mut u64buf[..]).map_err(error::from_io_error))?;
         let parent_span_id = u64::from_be_bytes(u64buf);
-        carrier.read(&mut u8buf[..]).expect("could not read flags");
+        track!(carrier.read(&mut u8buf[..]).map_err(error::from_io_error))?;
         let flags = u8buf[0];
 
         let state = SpanContextState {
