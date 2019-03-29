@@ -444,7 +444,7 @@ where
                 low: trace_id_low,
             },
             span_id,
-            flags: flags as u32,
+            flags: u32::from(flags),
             debug_id: String::new(),
         };
         Ok(Some(SpanContext::new(state, baggage_items)))
