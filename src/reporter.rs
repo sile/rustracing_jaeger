@@ -131,7 +131,7 @@ impl JaegerReporter {
             constants::JAEGER_CLIENT_VERSION_TAG_KEY,
             constants::JAEGER_CLIENT_VERSION,
         ));
-        if let Some(hostname) = hostname::get_hostname() {
+        if let Ok(Ok(hostname)) = hostname::get().map(|h| h.into_string()) {
             this.add_service_tag(Tag::new(constants::TRACER_HOSTNAME_TAG_KEY, hostname));
         }
         Ok(this)
