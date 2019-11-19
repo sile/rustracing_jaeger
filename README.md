@@ -3,8 +3,8 @@ rustracing_jaeger
 
 [![Crates.io: rustracing_jaeger](https://img.shields.io/crates/v/rustracing_jaeger.svg)](https://crates.io/crates/rustracing_jaeger)
 [![Documentation](https://docs.rs/rustracing_jaeger/badge.svg)](https://docs.rs/rustracing_jaeger)
-[![Build Status](https://travis-ci.org/sile/rustracing_jaeger.svg?branch=master)](https://travis-ci.org/sile/rustracing_jaeger)
-[![Code Coverage](https://codecov.io/gh/sile/rustracing_jaeger/branch/master/graph/badge.svg)](https://codecov.io/gh/sile/rustracing_jaeger/branch/master)
+[![Actions Status](https://github.com/sile/rustracing_jaeger/workflows/CI/badge.svg)](https://github.com/sile/rustracing_jaeger/actions)
+[![Coverage Status](https://coveralls.io/repos/github/sile/rustracing_jaeger/badge.svg?branch=master)](https://coveralls.io/github/sile/rustracing_jaeger?branch=master)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [Jaeger][jaeger] client library created on top of [rustracing].

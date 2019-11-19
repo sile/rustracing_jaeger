@@ -1,0 +1,6 @@
+ignore-not-existing: true
+llvm: true
+filter: covered
+ignore:
+  - "/*"
+  - "../*"

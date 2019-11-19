@@ -1,6 +1,6 @@
 [package]
 name = "rustracing_jaeger"
-version = "0.2.2"
+version = "0.3.0"
 authors = ["Takeru Ohta <phjgt308@gmail.com>"]
 description = "Jaeger client library created on top of rustracing"
 homepage = "https://github.com/sile/rustracing_jaeger"
@@ -11,8 +11,7 @@ license = "MIT"
 edition = "2018"
 
 [badges]
-travis-ci = {repository = "sile/rustracing_jaeger"}
-codecov = {repository = "sile/rustracing_jaeger"}
+coveralls = {repository = "sile/rustracing"}
 
 [dependencies]
 crossbeam-channel = "0.3"
