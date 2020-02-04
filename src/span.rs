@@ -472,6 +472,23 @@ mod test {
     }
 
     #[test]
+    fn sampled_flag_works() {
+        let state: SpanContextState = "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:1"
+            .parse()
+            .unwrap();
+
+        assert_eq!(state.is_sampled(), true);
+        assert_eq!(state.flags(), 1);
+
+        let state: SpanContextState = "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:0"
+            .parse()
+            .unwrap();
+
+        assert_eq!(state.is_sampled(), false);
+        assert_eq!(state.flags(), 0);
+    }
+
+    #[test]
     fn inject_to_text_map_works() -> TestResult {
         let (span_tx, _span_rx) = crossbeam_channel::bounded(10);
         let tracer = Tracer::with_sender(AllSampler, span_tx);
