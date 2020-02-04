@@ -372,7 +372,6 @@ where
             }
         }
         if let Some(mut state) = state {
-            state.flags |= FLAG_SAMPLED;
             if let Some(debug_id) = debug_id.take() {
                 state.set_debug_id(debug_id);
             }
