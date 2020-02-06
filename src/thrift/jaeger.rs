@@ -1,10 +1,8 @@
 //! https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
-use rustracing;
-use std::time::{SystemTime, UNIX_EPOCH};
-use thrift_codec::data::{Field, List, Struct};
-
 use crate::constants;
 use crate::span::{FinishedSpan, SpanReference};
+use std::time::{SystemTime, UNIX_EPOCH};
+use thrift_codec::data::{Field, List, Struct};
 
 /// `TagKind` denotes the kind of a `Tag`'s value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

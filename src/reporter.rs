@@ -1,17 +1,15 @@
 //! Reporter to the [jaeger agent]
 //!
 //! [jaeger agent]: http://jaeger.readthedocs.io/en/latest/deployment/#agent
-use hostname;
-use rustracing::tag::Tag;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket};
-use thrift_codec::message::Message;
-use thrift_codec::{BinaryEncode, CompactEncode};
-
 use crate::constants;
 use crate::error;
 use crate::span::FinishedSpan;
 use crate::thrift::{agent, jaeger};
 use crate::Result;
+use rustracing::tag::Tag;
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr, UdpSocket};
+use thrift_codec::message::Message;
+use thrift_codec::{BinaryEncode, CompactEncode};
 
 /// Reporter for the agent which accepts jaeger.thrift over compact thrift protocol.
 #[derive(Debug)]

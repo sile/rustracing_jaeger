@@ -39,8 +39,6 @@ use crate::constants;
 use crate::error;
 use crate::{Error, ErrorKind, Result};
 use percent_encoding::percent_decode;
-use rand;
-use rustracing;
 use rustracing::carrier::{
     ExtractFromBinary, ExtractFromHttpHeader, ExtractFromTextMap, InjectToBinary,
     InjectToHttpHeader, InjectToTextMap, IterHttpHeaderFields, SetHttpHeaderField, TextMap,

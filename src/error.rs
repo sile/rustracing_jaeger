@@ -1,5 +1,3 @@
-use std;
-use thrift_codec;
 use trackable::error::ErrorKindExt;
 
 use crate::{Error, ErrorKind};
