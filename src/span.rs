@@ -372,7 +372,6 @@ where
             }
         }
         if let Some(mut state) = state {
-            state.flags |= FLAG_SAMPLED;
             if let Some(debug_id) = debug_id.take() {
                 state.set_debug_id(debug_id);
             }
@@ -470,6 +469,23 @@ mod test {
         let id = TraceId { high: 1, low: 2 };
         assert_eq!(id.to_string(), "10000000000000002");
         assert_eq!("10000000000000002".parse::<TraceId>().unwrap(), id);
+    }
+
+    #[test]
+    fn sampled_flag_works() {
+        let state: SpanContextState = "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:1"
+            .parse()
+            .unwrap();
+
+        assert_eq!(state.is_sampled(), true);
+        assert_eq!(state.flags(), 1);
+
+        let state: SpanContextState = "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:0"
+            .parse()
+            .unwrap();
+
+        assert_eq!(state.is_sampled(), false);
+        assert_eq!(state.flags(), 0);
     }
 
     #[test]
