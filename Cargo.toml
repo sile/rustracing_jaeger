@@ -15,12 +15,12 @@ coveralls = {repository = "sile/rustracing"}
 
 [dependencies]
 crossbeam-channel = "0.4"
-hostname = "0.2"
-percent-encoding = "2"
-rand = "0.7"
-rustracing = "0.3"
-thrift_codec = "0.1"
-trackable = "0.2"
+hostname = "0.3.0"
+percent-encoding = "2.1.0"
+rand = "0.7.3"
+rustracing = "0.4.0"
+thrift_codec = "0.1.1"
+trackable = "0.2.23"
 
 [dev-dependencies]
 bytecodec = "0.4"
