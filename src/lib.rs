@@ -35,6 +35,7 @@ pub use self::span::Span;
 pub use self::tracer::Tracer;
 pub use rustracing::{Error, ErrorKind, Result};
 pub use thrift::jaeger;
+pub use thrift::agent;
 
 pub mod reporter;
 pub mod span;
