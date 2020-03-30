@@ -37,7 +37,6 @@ pub use rustracing::{Error, ErrorKind, Result};
 
 pub mod reporter;
 pub mod span;
-#[allow(missing_docs)]
 pub mod thrift;
 
 mod constants;

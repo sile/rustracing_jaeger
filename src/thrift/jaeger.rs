@@ -1,4 +1,6 @@
-//! https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
+//! Thrift components defined in [jaeger.thrift].
+//!
+//! [jaeger.thrift]: https://github.com/uber/jaeger-idl/blob/master/thrift/jaeger.thrift
 use crate::constants;
 use crate::span::{FinishedSpan, SpanReference};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -6,6 +8,7 @@ use thrift_codec::data::{Field, List, Struct};
 
 /// `TagKind` denotes the kind of a `Tag`'s value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[allow(missing_docs)]
 pub enum TagKind {
     String = 0,
     Double = 1,
@@ -16,6 +19,7 @@ pub enum TagKind {
 
 /// `Tag` is a basic strongly typed key/value pair.
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
+#[allow(missing_docs)]
 pub enum Tag {
     String { key: String, value: String },
     Double { key: String, value: f64 },
@@ -24,6 +28,7 @@ pub enum Tag {
     Binary { key: String, value: Vec<u8> },
 }
 impl Tag {
+    /// Returns the key of this tag.
     pub fn key(&self) -> &str {
         match *self {
             Tag::String { ref key, .. }
@@ -33,6 +38,8 @@ impl Tag {
             | Tag::Binary { ref key, .. } => key,
         }
     }
+
+    /// Returns the kind of this tag.
     pub fn kind(&self) -> TagKind {
         match *self {
             Tag::String { .. } => TagKind::String,
@@ -82,6 +89,7 @@ impl<'a> From<&'a rustracing::log::LogField> for Tag {
 
 /// `Log` is a timed even with an arbitrary set of tags.
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Log {
     pub timestamp: i64,
     pub fields: Vec<Tag>,
@@ -103,7 +111,9 @@ impl<'a> From<&'a rustracing::log::Log> for Log {
     }
 }
 
+/// Span reference kind.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[allow(missing_docs)]
 pub enum SpanRefKind {
     ChildOf = 0,
     FollowsFrom = 1,
@@ -111,6 +121,7 @@ pub enum SpanRefKind {
 
 /// `SpanRef` describes causal relationship of the current span to another span (e.g. 'child-of')
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub struct SpanRef {
     pub kind: SpanRefKind,
     pub trace_id_low: i64,
@@ -155,6 +166,7 @@ pub struct Span {
     /// Should be `0` if the current span is a root span.
     pub parent_span_id: i64,
 
+    /// The name of operation.
     pub operation_name: String,
 
     /// Causal references to other spans.
@@ -165,9 +177,16 @@ pub struct Span {
     /// `1` signifies a SAMPLED span, `2` signifies a DEBUG span.
     pub flags: i32,
 
+    /// Start time of this span.
     pub start_time: i64,
+
+    /// Duration of this span.
     pub duration: i64,
+
+    /// Tag list.
     pub tags: Vec<Tag>,
+
+    /// Log list.
     pub logs: Vec<Log>,
 }
 impl From<Span> for Struct {
@@ -256,7 +275,10 @@ fn elapsed(start: SystemTime, finish: SystemTime) -> i64 {
 /// `Process` describes the traced process/service that emits spans.
 #[derive(Debug, Clone)]
 pub struct Process {
+    /// The name of this service.
     pub service_name: String,
+
+    /// Tag list.
     pub tags: Vec<Tag>,
 }
 impl From<Process> for Struct {
@@ -272,6 +294,7 @@ impl From<Process> for Struct {
 
 /// `Batch` is a collection of spans reported out of process.
 #[derive(Debug, Clone)]
+#[allow(missing_docs)]
 pub struct Batch {
     pub process: Process,
     pub spans: Vec<Span>,
