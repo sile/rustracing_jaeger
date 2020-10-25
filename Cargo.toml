@@ -14,7 +14,7 @@ edition = "2018"
 coveralls = {repository = "sile/rustracing"}
 
 [dependencies]
-crossbeam-channel = "0.4"
+crossbeam-channel = "0.5"
 hostname = "0.3.0"
 percent-encoding = "2.1.0"
 rand = "0.7.3"
