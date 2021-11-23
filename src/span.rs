@@ -253,7 +253,7 @@ impl SpanContextState {
     }
 
     /// Returns the flags for this span.
-    pub(crate) fn flags(&self) -> u8 {
+    pub fn flags(&self) -> u8 {
         self.flags
     }
 
