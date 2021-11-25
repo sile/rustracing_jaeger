@@ -442,7 +442,7 @@ where
                 low: trace_id_low,
             },
             span_id,
-            flags: u8::from(flags),
+            flags,
             debug_id: String::new(),
         };
         Ok(Some(SpanContext::new(state, baggage_items)))
@@ -476,14 +476,14 @@ mod test {
             .parse()
             .unwrap();
 
-        assert_eq!(state.is_sampled(), true);
+        assert!(state.is_sampled());
         assert_eq!(state.flags(), 1);
 
         let state: SpanContextState = "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:0"
             .parse()
             .unwrap();
 
-        assert_eq!(state.is_sampled(), false);
+        assert!(!state.is_sampled());
         assert_eq!(state.flags(), 0);
     }
 
