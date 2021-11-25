@@ -3,7 +3,6 @@ extern crate trackable;
 
 use bytecodec::bytes::Utf8Encoder;
 use bytecodec::null::NullDecoder;
-use fibers_global;
 use fibers_http_server::{HandleRequest, Reply, Req, Res, ServerBuilder, Status};
 use futures::future::ok;
 use httpcodec::{BodyDecoder, BodyEncoder};
