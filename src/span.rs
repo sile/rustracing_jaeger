@@ -76,8 +76,8 @@ pub type SpanContext = rustracing::span::SpanContext<SpanContextState>;
 /// Span reference.
 pub type SpanReference = rustracing::span::SpanReference<SpanContextState>;
 
-const FLAG_SAMPLED: u32 = 0b01;
-const FLAG_DEBUG: u32 = 0b10;
+const FLAG_SAMPLED: u8 = 0b01;
+const FLAG_DEBUG: u8 = 0b10;
 
 /// Unique 128bit identifier of a trace.
 ///
@@ -155,7 +155,7 @@ impl FromStr for TraceId {
 pub struct SpanContextStateBuilder {
     trace_id: Option<TraceId>,
     span_id: Option<u64>,
-    flags: u32,
+    flags: u8,
     debug_id: String,
 }
 impl SpanContextStateBuilder {
@@ -217,7 +217,7 @@ impl Default for SpanContextStateBuilder {
 pub struct SpanContextState {
     trace_id: TraceId,
     span_id: u64,
-    flags: u32,
+    flags: u8,
     debug_id: String,
 }
 impl SpanContextState {
@@ -252,7 +252,8 @@ impl SpanContextState {
         }
     }
 
-    pub(crate) fn flags(&self) -> u32 {
+    /// Returns the flags for this span.
+    pub fn flags(&self) -> u8 {
         self.flags
     }
 
@@ -294,7 +295,7 @@ impl FromStr for SpanContextState {
             track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
         let _parent_span_id =
             track!(u64::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
-        let flags = track!(u32::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
+        let flags = track!(u8::from_str_radix(token!(), 16).map_err(error::from_parse_int_error))?;
 
         Ok(SpanContextState {
             trace_id,
@@ -441,7 +442,7 @@ where
                 low: trace_id_low,
             },
             span_id,
-            flags: u32::from(flags),
+            flags,
             debug_id: String::new(),
         };
         Ok(Some(SpanContext::new(state, baggage_items)))
@@ -475,14 +476,14 @@ mod test {
             .parse()
             .unwrap();
 
-        assert_eq!(state.is_sampled(), true);
+        assert!(state.is_sampled());
         assert_eq!(state.flags(), 1);
 
         let state: SpanContextState = "6309ab92c95468edea0dc1a9772ae2dc:409423a204bc17a8:0:0"
             .parse()
             .unwrap();
 
-        assert_eq!(state.is_sampled(), false);
+        assert!(!state.is_sampled());
         assert_eq!(state.flags(), 0);
     }
 
@@ -575,7 +576,7 @@ mod test {
         u64buf.copy_from_slice(&sbv[24..32]);
         assert_eq!(0, u64::from_be_bytes(u64buf)); // parent_span_id attribute is obsolete.
         u8buf.copy_from_slice(&sbv[32..33]);
-        assert_eq!(context.state().flags(), u8buf[0] as u32);
+        assert_eq!(context.state().flags(), u8buf[0]);
         u32buf.copy_from_slice(&sbv[33..37]);
         assert_eq!(0, u32::from_be_bytes(u32buf)); // no baggage item length
 
