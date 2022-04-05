@@ -18,7 +18,7 @@ crossbeam-channel = "0.5"
 hostname = "0.3.0"
 percent-encoding = "2.1.0"
 rand = "0.8.3"
-rustracing = "0.5.0"
+rustracing = "0.6"
 thrift_codec = "0.1.1"
 trackable = "1"
 
