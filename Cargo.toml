@@ -20,11 +20,11 @@ percent-encoding = "2.1.0"
 rand = "0.8.3"
 rustracing = "0.5.0"
 thrift_codec = "0.1.1"
-trackable = "0.2.23"
+trackable = "1"
 
 [dev-dependencies]
 bytecodec = "0.4"
 fibers_global = "0.1"
-fibers_http_server = "0.1"
+fibers_http_server = "0.2"
 futures = "0.1"
 httpcodec = "0.2"
