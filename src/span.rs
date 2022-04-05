@@ -393,11 +393,10 @@ where
     T: Write,
 {
     fn inject_to_binary(context: &SpanContext, carrier: &mut T) -> Result<()> {
-        let mut u64buf: [u8; 8];
-        let u32buf: [u8; 4];
-        let u8buf: [u8; 1];
+        let mut u64buf: [u8; 8] = context.state().trace_id.high.to_be_bytes();
+        let u32buf: [u8; 4] = [0; 4]; // TODO: Support baggage items
+        let u8buf: [u8; 1] = [context.state().flags as u8];
 
-        u64buf = context.state().trace_id.high.to_be_bytes();
         track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u64buf = context.state().trace_id.low.to_be_bytes();
         track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
@@ -406,10 +405,7 @@ where
         // parent_span_id attribute is obsolete, write zeros.
         u64buf = [0; 8];
         track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
-        u8buf = [context.state().flags as u8];
         track!(carrier.write(&u8buf).map_err(error::from_io_error))?;
-        // TODO: Support baggage items
-        u32buf = [0; 4];
         track!(carrier.write(&u32buf).map_err(error::from_io_error))?;
 
         Ok(())
