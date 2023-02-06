@@ -395,7 +395,7 @@ where
     fn inject_to_binary(context: &SpanContext, carrier: &mut T) -> Result<()> {
         let mut u64buf: [u8; 8] = context.state().trace_id.high.to_be_bytes();
         let u32buf: [u8; 4] = [0; 4]; // TODO: Support baggage items
-        let u8buf: [u8; 1] = [context.state().flags as u8];
+        let u8buf: [u8; 1] = [context.state().flags];
 
         track!(carrier.write(&u64buf).map_err(error::from_io_error))?;
         u64buf = context.state().trace_id.low.to_be_bytes();
