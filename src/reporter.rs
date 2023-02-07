@@ -6,6 +6,7 @@ use crate::error;
 use crate::span::FinishedSpan;
 use crate::thrift::{agent, jaeger};
 use crate::Result;
+use local_ip_address::local_ip;
 use rustracing::tag::Tag;
 use std::net::{SocketAddr, UdpSocket};
 use thrift_codec::message::Message;
@@ -152,6 +153,11 @@ impl JaegerReporter {
         if let Ok(Ok(hostname)) = hostname::get().map(|h| h.into_string()) {
             this.add_service_tag(Tag::new(constants::TRACER_HOSTNAME_TAG_KEY, hostname));
         }
+
+        if let Ok(local_ip_address) = local_ip().map(|h| h.to_string()) {
+            this.add_service_tag(Tag::new(constants::TRACER_IP_TAG_KEY, local_ip_address));
+        }
+
         Ok(this)
     }
     fn set_agent_addr(&mut self, addr: SocketAddr) {
