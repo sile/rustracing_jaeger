@@ -44,7 +44,7 @@ impl Tracer {
     }
 
     /// Returns `StartSpanOptions` for starting a span which has the name `operation_name`.
-    pub fn span<N>(&self, operation_name: N) -> StartSpanOptions
+    pub fn span<N>(&self, operation_name: N) -> StartSpanOptions<'_>
     where
         N: Into<Cow<'static, str>>,
     {
